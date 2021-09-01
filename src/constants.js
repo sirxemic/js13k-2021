@@ -1,0 +1,1 @@
+export const FOVX = 1.5
