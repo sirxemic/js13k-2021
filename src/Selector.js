@@ -2,29 +2,30 @@ import { TheCamera } from './Camera.js'
 import { FSM } from './FSM.js'
 import { SelectorCube } from './Geometries/SelectorCube.js'
 import { currentPuzzle } from './globals.js'
-import { gl, TheCanvas } from './Graphics.js'
-import { U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
+import { gl } from './Graphics.js'
+import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
-import { Vector3 } from './Math/Vector3.js'
+import { Matrix4 } from './Math/Matrix4.js'
 import { SelectorShader } from './Shaders/SelectorShader.js'
-import { Transform3D } from './Transform3D.js'
 import { closestModulo } from './utils.js'
 
-export class Cursor extends Transform3D {
+export class Cursor {
   constructor ({ x, y }) {
-    super()
-
     this.x = x
     this.y = y
 
-    this.matrix.setTranslation(new Vector3(this.x * 2 - 4, this.y * 2 - 4, 0))
-    this.updateMatrices()
+    this.worldMatrix = new Matrix4([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      this.x * 2 - 4, this.y * 2 - 4, 0, 1
+    ])
   }
 
   render () {
     SelectorShader.use({
       [U_TIME]: performance.now() / 1000,
-      ...this.getCommonUniforms()
+      [U_MODELMATRIX]: this.worldMatrix
     })
     SelectorCube.draw()
   }
@@ -168,6 +169,14 @@ export class Selector {
       [MOVING_CAMERA_STATE]: {
         enter: () => {
           this.clearCursors()
+
+          Input.onPanUpdate = (e) => {
+            TheCamera.handlePanUpdate(e)
+          }
+        },
+
+        leave: () => {
+          Input.onPanUpdate = () => {}
         }
       },
 
@@ -183,9 +192,6 @@ export class Selector {
     Input.onPanStart = (e) => {
       fsm.setState(MOVING_CAMERA_STATE)
       TheCamera.handlePanStart(e)
-    }
-    Input.onPanUpdate = (e) => {
-      TheCamera.handlePanUpdate(e)
     }
     Input.onPanEnd = (e) => {
       fsm.setState(AFTER_MOVING_CAMERA_STATE)
@@ -244,7 +250,7 @@ export class Selector {
   }
 
   step () {
-    this.fsm.step()
+    this.fsm.updateFSM()
   }
 
   render () {

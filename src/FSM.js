@@ -10,7 +10,7 @@ export class FSM {
     this.newState = name
   }
 
-  step () {
+  updateFSM () {
     if (this.newState) {
       this.activeState = this.newState
       this.newState = null

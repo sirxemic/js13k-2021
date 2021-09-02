@@ -2,12 +2,14 @@ import { StarFieldTexture } from './Assets.js'
 import { TheCamera } from './Camera.js'
 import { Quad } from './Geometries/Quad.js'
 import { StackedQuads } from './Geometries/StackedQuads.js'
-import { currentPuzzle } from './globals.js'
+import { currentPuzzle, delta } from './globals.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { RenderTarget } from './Graphics/RenderTarget.js'
 import {
   U_COLOR,
+  U_FADE_AMOUNT,
   U_GALAXY_CENTER,
+  U_GALAXY_CONNECTION,
   U_MODELMATRIX,
   U_TEXTURE,
   U_TEXTURE_STARS,
@@ -21,24 +23,38 @@ import { Vector2 } from './Math/Vector2.js'
 import { Vector3 } from './Math/Vector3.js'
 import { PuzzleShader } from './Shaders/PuzzleShader.js'
 import { TileShader } from './Shaders/TileShader.js'
+import { smoothstep } from './utils.js'
 
 const RESOLUTION = 64
 
 export class PuzzleRenderer {
   constructor () {
     this.mask = new RenderTarget(RESOLUTION * currentPuzzle.width, RESOLUTION * currentPuzzle.height)
+    this.fadeSpeed = 0.5
+    this.fadeT = 0
+  }
+
+  finishUp () {
+    this.fadeSpeed = -0.5
   }
 
   renderMask () {
     this.mask.bind()
     gl.viewport(0, 0, RESOLUTION * currentPuzzle.width, RESOLUTION * currentPuzzle.height)
+    gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
+    gl.blendFunc(gl.ONE, gl.ZERO)
     for (let tile of currentPuzzle.tiles) {
       if (tile.id < 0) continue
       this.renderTileMask(tile)
     }
     gl.enable(gl.DEPTH_TEST)
     RenderTarget.unbind()
+  }
+
+  step () {
+    this.fadeT = Math.min(1, this.fadeT + delta * this.fadeSpeed)
+    this.fadeAmount = smoothstep(1, 0, this.fadeT)
   }
 
   render () {
@@ -51,6 +67,7 @@ export class PuzzleRenderer {
     PuzzleShader.use({
       [U_TEXTURE]: { slot: 0, texture: this.mask },
       [U_TEXTURE_STARS]: { slot: 1, texture: StarFieldTexture },
+      [U_FADE_AMOUNT]: this.fadeAmount,
       [U_TIME]: performance.now() / 100000
     })
 
@@ -89,7 +106,8 @@ export class PuzzleRenderer {
       [U_WORLD_SIZE]: new Vector2(currentPuzzle.width, currentPuzzle.height),
       [U_COLOR]: currentPuzzle.colorIds[tile.id] / 6,
       [U_GALAXY_CENTER]: currentPuzzle.centers[tile.id],
-      [U_TILE_CONNECTION]: currentPuzzle.getConnection(tile)
+      [U_TILE_CONNECTION]: currentPuzzle.getShaderConnectionData(tile),
+      [U_GALAXY_CONNECTION]: currentPuzzle.isTileConnectedToCenter(tile)
     })
     Quad.draw()
   }

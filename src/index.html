@@ -6,10 +6,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1,user-scalable=no">
 <title>Galaxies</title>
 <style>
+  * {
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+  }
   body {
     background: #000;
     margin: 0;
     overflow: hidden;
+    font-family: sans-serif;
+    font-weight: bold;
+  }
+  canvas {
+    pointer-events: none;
   }
   .header {
     position: fixed;
@@ -19,6 +29,19 @@
     color: #fff;
     font-family: sans-serif;
     z-index: 1;
+    pointer-events: none;
+  }
+  .progress {
+    pointer-events: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    color: #fff;
+    text-align: center;
+    padding: 0.5em;
+    font-size: 5vmin;
+    background: #0005
   }
 </style>
 <style>
@@ -28,6 +51,7 @@
 <body>
   <canvas></canvas>
   <div class="header">Galaxies</div>
+  <div class="progress"></div>
   <script src="build.js"></script>
 </body>
 </html>

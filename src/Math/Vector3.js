@@ -12,6 +12,13 @@ export class Vector3 {
     return this
   }
 
+  add (v) {
+    this.x += v.x
+    this.y += v.y
+    this.z += v.z
+    return this
+  }
+
   addScaled (v, s) {
     this.x += v.x * s
     this.y += v.y * s
@@ -58,6 +65,10 @@ export class Vector3 {
     this.y *= scalar
     this.z *= scalar
     return this
+  }
+
+  distanceTo (v) {
+    return Math.sqrt((v.x - this.x) ** 2 + (v.y - this.y) ** 2 + (v.z - this.z) ** 2)
   }
 
   crossVectors (v1, v2) {

@@ -1,4 +1,4 @@
-import { ATTR_POSITION, U_COLOR, U_GALAXY_CENTER, U_TILE_CONNECTION, U_TILE_POS, U_WORLD_SIZE } from '../Graphics/sharedLiterals.js'
+import { ATTR_POSITION, U_COLOR, U_GALAXY_CENTER, U_GALAXY_CONNECTION, U_TILE_CONNECTION, U_TILE_POS, U_WORLD_SIZE } from '../Graphics/sharedLiterals.js'
 import { ShaderProgram } from '../Graphics/ShaderProgram.js'
 
 export const vertexShader = `/*glsl*/
@@ -19,6 +19,7 @@ uniform vec4 ${U_TILE_CONNECTION};
 uniform vec2 ${U_GALAXY_CENTER};
 uniform vec2 ${U_WORLD_SIZE};
 uniform float ${U_COLOR};
+uniform float ${U_GALAXY_CONNECTION};
 varying vec2 vp; // position
 varying vec2 wp; // worldPos
 
@@ -74,7 +75,7 @@ void main() {
   }
   float g = 1.0 - md * 0.7; // glow amount
 
-  gl_FragColor = vec4(m, g, ${U_COLOR}, 1.0);
+  gl_FragColor = vec4(m, g, ${U_COLOR}, ${U_GALAXY_CONNECTION});
 }
 `
 

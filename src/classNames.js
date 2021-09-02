@@ -1,3 +1,4 @@
 export const classNames = {
-  header: 'a'
+  header: 'a',
+  progress: 'b'
 }

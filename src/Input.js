@@ -1,6 +1,3 @@
-import { TheCanvas } from './Graphics.js'
-import { TheCamera } from './Camera.js'
-
 export let Input = {
   x: -1000,
   y: -1000,
@@ -72,9 +69,7 @@ document.addEventListener('touchstart', e => {
   }
 
   if (e.touches.length > 1) {
-    Input.onPanStart({
-      touchStartPositions
-    })
+    Input.onPanStart(touchStartPositions)
   } else {
     updateMousePos(e.changedTouches[0])
     Input.pointerDown = true
@@ -95,12 +90,10 @@ document.addEventListener('touchmove', e => {
     touchPositions[touch.identifier] = touch
   }
 
-  Input.onPanUpdate({
-    touchPositions
-  })
+  Input.onPanUpdate(touchPositions)
 })
 
-document.addEventListener('touchend', e => {
+function handleTouchEnd (e) {
   for (const touch of e.changedTouches) {
     delete touchStartPositions[touch.identifier]
   }
@@ -114,6 +107,9 @@ document.addEventListener('touchend', e => {
   } else if (e.touches.length === 0) {
     Input.pointerDown = false
   }
-})
+}
+
+document.addEventListener('touchend', handleTouchEnd)
+document.addEventListener('touchcancel', handleTouchEnd)
 
 document.body.addEventListener('mousemove', onMouseMove)

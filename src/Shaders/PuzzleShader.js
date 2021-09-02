@@ -5,7 +5,8 @@ import {
   ATTR_POSITION,
   U_TEXTURE,
   U_TEXTURE_STARS,
-  U_TIME
+  U_TIME,
+  U_FADE_AMOUNT
 } from '../Graphics/sharedLiterals.js'
 import { ShaderProgram } from '../Graphics/ShaderProgram.js'
 
@@ -25,6 +26,7 @@ export const fragmentShader = `/*glsl*/
 uniform sampler2D ${U_TEXTURE};
 uniform sampler2D ${U_TEXTURE_STARS};
 uniform float ${U_TIME};
+uniform float ${U_FADE_AMOUNT};
 varying vec2 uv;
 varying vec3 vp;
 
@@ -46,10 +48,15 @@ void main() {
   vec3 cc = mix(color, vec3(1.0), data.g * data.g * data.g);
   cc = mix(cc, vec3(1.0), starData.g);
 
-  float a = sqrt(data.r) - (abs(vp.z) * abs(vp.z) * 2.0);
+  float a = (sqrt(data.r) - (abs(vp.z) * abs(vp.z) * 2.0) - ${U_FADE_AMOUNT});
+  if (data.w < 0.5) {
+    a *= (sin(${U_TIME} * 300.0) + 2.0) * 0.333;
+  }
 
   if (starData.r > 0.5 && starData.g > 0.5 && a > 0.0) a *= 0.9;
-  else if (data.g > 0.0) a *= max(0.07, data.g * 0.1);
+  else if (data.g > 0.0) {
+    a *= max(0.07, (data.g + ${U_FADE_AMOUNT}) * 0.1);
+  }
   else a *= 0.07;
 
   gl_FragColor = vec4(cc, a);

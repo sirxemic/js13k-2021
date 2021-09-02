@@ -1,4 +1,3 @@
-import { TheCamera } from './Camera.js'
 import { Vector2 } from './Math/Vector2.js'
 import { Vector4 } from './Math/Vector4.js'
 
@@ -24,6 +23,8 @@ export class Puzzle {
       0, 1, 2, 3, 4
     ]
 
+    this.setCenterTiles()
+
     this.tiles = Array.from(
       { length: width * height },
       (_, index) => {
@@ -33,78 +34,21 @@ export class Puzzle {
       }
     )
 
-    ;[
-      { x: 0, y: 0},
-      { x: 1, y: 0},
-      { x: 2, y: 0},
-      { x: 1, y: 1},
-      { x: 2, y: 1},
-      { x: 3, y: 1},
-      { x: 3, y: 2},
-      { x: 3, y: 3},
-      { x: 0, y: 4},
-      { x: 0, y: 3},
-      { x: 4, y: 3}
-    ].forEach(pos => {
-      const tile = this.getTileAt(pos)
-      tile.id = 0
-    })
-
-    ;[
-      { x: 0, y: 1},
-      { x: 0, y: 2},
-      { x: 1, y: 2},
-      { x: 1, y: 3},
-      { x: 4, y: 1},
-      { x: 4, y: 0}
-    ].forEach(pos => {
-      const tile = this.getTileAt(pos)
-      tile.id = 1
-    })
-
-    ;[
-      { x: 1, y: 4},
-      { x: 2, y: 4},
-      { x: 3, y: 4},
-      { x: 4, y: 4},
-      { x: 2, y: 3},
-      { x: 3, y: 5}
-    ].forEach(pos => {
-      const tile = this.getTileAt(pos)
-      tile.id = 2
-    })
-
-    ;[
-      { x: 2, y: 2}
-    ].forEach(pos => {
-      const tile = this.getTileAt(pos)
-      tile.id = 3
-    })
-
-    ;[
-      { x: 4, y: 2}
-    ].forEach(pos => {
-      const tile = this.getTileAt(pos)
-      tile.id = 4
+    this.centerTiles.forEach(tile => {
+      this.tiles[tile.x + tile.y * width] = tile
     })
 
     this.updateConnections()
   }
 
-  getTileAt ({ x, y }) {
-    if (x < 0) x %= this.width
-    x = (x + this.width) % this.width
-    if (y < 0) y %= this.height
-    y = (y + this.height) % this.height
-    return this.tiles[x + y * this.width]
-  }
+  isSolved () {
+    for (const tile of this.tiles) {
+      if (tile.id === -1) {
+        return false
+      }
+    }
 
-  getIdAt (pos) {
-    return this.getTileAt(pos).id
-  }
-
-  setAt (pos, id) {
-    this.getTileAt(pos).id = id
+    return this.disconnectedTiles.size === 0
   }
 
   setSymmetricallyAt (pos, id) {
@@ -143,14 +87,6 @@ export class Puzzle {
     this.updateConnections()
   }
 
-  getOpposite ({ x, y }, id) {
-    const center = this.centers[id]
-    return {
-      x: 2 * center.x - x - 1,
-      y: 2 * center.y - y - 1
-    }
-  }
-
   unsetSymmetricallyAt (pos) {
     const id = this.getIdAt(pos)
     if (id < 0) {
@@ -168,6 +104,52 @@ export class Puzzle {
       }
 
       this.updateConnections()
+    }
+  }
+
+  getTileAt ({ x, y }) {
+    if (x < 0) x %= this.width
+    x = (x + this.width) % this.width
+    if (y < 0) y %= this.height
+    y = (y + this.height) % this.height
+    return this.tiles[x + y * this.width]
+  }
+
+  getIdAt (pos) {
+    return this.getTileAt(pos).id
+  }
+
+  setCenterTiles () {
+    this.centerTiles = []
+    this.centers.forEach(({ x, y }, id) => {
+      x -= 0.5
+      y -= 0.5
+      if (x % 1 === 0 && y % 1 === 0) {
+        this.centerTiles.push({ x, y, id })
+      } else if (x % 1 === 0 && y % 1 !== 0) {
+        this.centerTiles.push({ x, y: (y - 0.5 + this.height) % this.height , id })
+        this.centerTiles.push({ x, y: (y + 0.5) % this.height, id })
+      } else if (x % 1 !== 0 && y % 1 === 0) {
+        this.centerTiles.push({ x: (x - 0.5 + this.width) % this.width, y, id })
+        this.centerTiles.push({ x: (x + 0.5) % this.width, y, id })
+      } else {
+        this.centerTiles.push({ x: (x - 0.5 + this.width) % this.width, y: (y - 0.5 + this.height) % this.height, id })
+        this.centerTiles.push({ x: (x + 0.5) % this.width, y: (y - 0.5 + this.height) % this.height, id })
+        this.centerTiles.push({ x: (x - 0.5 + this.width) % this.width, y: (y + 0.5) % this.height, id })
+        this.centerTiles.push({ x: (x + 0.5) % this.width, y: (y + 0.5) % this.height, id })
+      }
+    })
+  }
+
+  setAt (pos, id) {
+    this.getTileAt(pos).id = id
+  }
+
+  getOpposite ({ x, y }, id) {
+    const center = this.centers[id]
+    return {
+      x: 2 * center.x - x - 1,
+      y: 2 * center.y - y - 1
     }
   }
 
@@ -199,7 +181,35 @@ export class Puzzle {
   }
 
   updateConnections () {
-    this.connections = this.tiles.map(({ x, y, id }) => {
+    const visited = new Set()
+    const toVisit = this.centerTiles.slice()
+
+    while (toVisit.length > 0) {
+      const tile = toVisit.pop()
+      visited.add(tile)
+      const { x, y, id } = tile
+      ;[
+        this.getTileAt({ x: x - 1, y }),
+        this.getTileAt({ x: x + 1, y }),
+        this.getTileAt({ x, y: y - 1 }),
+        this.getTileAt({ x, y: y + 1 })
+      ].forEach(otherTile => {
+        if (otherTile.id === id && !visited.has(otherTile)) toVisit.push(otherTile)
+      })
+    }
+
+    this.disconnectedTiles = new Set()
+    this.connectedTileCount = 0
+    this.connectionData = []
+
+    this.tiles.forEach((tile) => {
+      const { x, y, id } = tile
+      if (!visited.has(tile)) {
+        this.disconnectedTiles.add(`${tile.x}_${tile.y}`)
+      }
+      else if (id > -1) {
+        this.connectedTileCount++
+      }
       const tileLeft = this.isConnectedAt(id, { x: x - 1, y })
       const tileRight = this.isConnectedAt(id, { x: x + 1, y })
       const tileDown = this.isConnectedAt(id, { x, y: y - 1 })
@@ -212,16 +222,22 @@ export class Puzzle {
       let h = tileLeft && tileRight ? 2 : tileLeft ? -1 : tileRight ? 1 : 0
       let v = tileUp && tileDown ? 2 : tileDown ? -1 : tileUp ? 1 : 0
 
-      return new Vector4(
-        h,
-        v,
-        tileUpRight && tileDownLeft ? 2 : tileUpRight ? 1 : tileDownLeft ? -1 : 0,
-        tileUpLeft && tileDownRight ? 2 : tileUpLeft ? 1 : tileDownRight ? -1 : 0
+      this.connectionData.push(
+          new Vector4(
+          h,
+          v,
+          tileUpRight && tileDownLeft ? 2 : tileUpRight ? 1 : tileDownLeft ? -1 : 0,
+          tileUpLeft && tileDownRight ? 2 : tileUpLeft ? 1 : tileDownRight ? -1 : 0
+        )
       )
     })
   }
 
-  getConnection ({ x, y }) {
-    return this.connections[x + y * this.width]
+  getShaderConnectionData ({ x, y }) {
+    return this.connectionData[x + y * this.width]
+  }
+
+  isTileConnectedToCenter ({ x, y }) {
+    return !this.disconnectedTiles.has(`${x}_${y}`)
   }
 }
