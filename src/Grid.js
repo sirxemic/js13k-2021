@@ -1,8 +1,8 @@
-import { StarFieldTexture } from './Assets'
-import { Quad } from './Geometries/Quad'
-import { U_MODELMATRIX, U_TEXTURE_STARS } from './Graphics/sharedLiterals'
-import { Matrix4 } from './Math/Matrix4'
-import { GridShader } from './Shaders/GridShader'
+import { StarFieldTexture } from './Assets.js'
+import { Quad } from './Geometries/Quad.js'
+import { U_MODELMATRIX, U_TEXTURE_STARS } from './Graphics/sharedLiterals.js'
+import { Matrix4 } from './Math/Matrix4.js'
+import { GridShader } from './Shaders/GridShader.js'
 
 export class Grid {
   render () {

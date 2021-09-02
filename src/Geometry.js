@@ -1,6 +1,6 @@
-import { gl } from './Graphics'
-import { currentProgram } from './Graphics/ShaderProgram'
-import { ATTR_POSITION, ATTR_NORMAL } from './Graphics/sharedLiterals'
+import { gl } from './Graphics.js'
+import { currentProgram } from './Graphics/ShaderProgram.js'
+import { ATTR_POSITION, ATTR_NORMAL } from './Graphics/sharedLiterals.js'
 
 let currentLocations = []
 

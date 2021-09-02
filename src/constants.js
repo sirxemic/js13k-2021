@@ -1,1 +1,1 @@
-export const FOVX = 1.5
+export const FOVY = 0.5

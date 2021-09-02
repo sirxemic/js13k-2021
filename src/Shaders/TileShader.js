@@ -1,16 +1,16 @@
-import { ATTR_POSITION, U_COLOR, U_GALAXY_CENTER, U_MODELMATRIX, U_TILE_CONNECTION, U_TILE_POS, U_WORLD_SIZE } from '../Graphics/sharedLiterals'
-import { ShaderProgram } from '../Graphics/ShaderProgram'
+import { ATTR_POSITION, U_COLOR, U_GALAXY_CENTER, U_TILE_CONNECTION, U_TILE_POS, U_WORLD_SIZE } from '../Graphics/sharedLiterals.js'
+import { ShaderProgram } from '../Graphics/ShaderProgram.js'
 
 export const vertexShader = `/*glsl*/
 uniform vec2 ${U_TILE_POS};
 uniform vec2 ${U_WORLD_SIZE};
-varying vec2 vp;
-varying vec2 worldPos;
+varying vec2 vp; // position
+varying vec2 wp; // worldPos
 
 void main() {
   vp = ${ATTR_POSITION}.xy;
-  worldPos = ${ATTR_POSITION}.xy * 0.5 + ${U_TILE_POS};
-  gl_Position = vec4((worldPos * 2.0) / ${U_WORLD_SIZE} - 1.0, 0.0, 1.0);
+  wp = ${ATTR_POSITION}.xy * 0.5 + ${U_TILE_POS};
+  gl_Position = vec4((wp * 2.0) / ${U_WORLD_SIZE} - 1.0, 0.0, 1.0);
 }
 `
 
@@ -19,11 +19,11 @@ uniform vec4 ${U_TILE_CONNECTION};
 uniform vec2 ${U_GALAXY_CENTER};
 uniform vec2 ${U_WORLD_SIZE};
 uniform float ${U_COLOR};
-varying vec2 vp;
-varying vec2 worldPos;
+varying vec2 vp; // position
+varying vec2 wp; // worldPos
 
-float getMask(vec2 pos, float h, float v, float _d) {
-  if (_d > 0.0) return 1.0;
+float getMask(vec2 pos, float h, float v, float d) {
+  if (d > 0.0) return 1.0;
   if (h <= 0.0 && v <= 0.0) {
     return 1.0 - length(pos);
   }
@@ -42,37 +42,37 @@ float getMask(vec2 pos, float h, float v, float _d) {
 void main() {
   vec4 t = ${U_TILE_CONNECTION};
 
-  float cLeft = t.x > 1.5 ? 1.0 : -t.x;
-  float cRight = t.x;
-  float cTop = t.y;
-  float cBottom = t.y > 1.5 ? 1.0 : -t.y;
-  float cTopRight = t.z;
-  float cBottomLeft = t.z > 1.5 ? 1.0 : -t.z;
-  float cTopLeft = t.w;
-  float cBottomRight = t.w > 1.5 ? 1.0 : -t.w;
+  float cL = t.x > 1.5 ? 1.0 : -t.x;
+  float cR = t.x;
+  float cT = t.y;
+  float cB = t.y > 1.5 ? 1.0 : -t.y;
+  float cTR = t.z;
+  float cBL = t.z > 1.5 ? 1.0 : -t.z;
+  float cTL = t.w;
+  float cBR = t.w > 1.5 ? 1.0 : -t.w;
 
   float m = 0.0;
   if (vp.x < 0.0) {
     if (vp.y > 0.0) {
-      m = getMask(abs(vp), cLeft, cTop, cTopLeft);
+      m = getMask(abs(vp), cL, cT, cTL);
     } else {
-      m = getMask(abs(vp), cLeft, cBottom, cBottomLeft);
+      m = getMask(abs(vp), cL, cB, cBL);
     }
   } else {
     if (vp.y > 0.0) {
-      m = getMask(abs(vp), cRight, cTop, cTopRight);
+      m = getMask(abs(vp), cR, cT, cTR);
     } else {
-      m = getMask(abs(vp), cRight, cBottom, cBottomRight);
+      m = getMask(abs(vp), cR, cB, cBR);
     }
   }
 
-  float minDist = 100.0;
+  float md = 100.0; // min distance
   for (int x = -1; x <= 1; x++) {
     for (int y = -1; y <= 1; y++) {
-      minDist = min(minDist, length(worldPos + ${U_WORLD_SIZE} * vec2(x, y) - ${U_GALAXY_CENTER}));
+      md = min(md, length(wp + ${U_WORLD_SIZE} * vec2(x, y) - ${U_GALAXY_CENTER}));
     }
   }
-  float g = 1.0 - minDist * 0.7;
+  float g = 1.0 - md * 0.7; // glow amount
 
   gl_FragColor = vec4(m, g, ${U_COLOR}, 1.0);
 }

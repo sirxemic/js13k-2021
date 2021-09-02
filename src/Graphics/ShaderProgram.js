@@ -1,14 +1,12 @@
-import { gl } from '../Graphics'
-import { Vector3 } from '../Math/Vector3'
-import { Matrix3 } from '../Math/Matrix3'
-import { Matrix4 } from '../Math/Matrix4'
-import { TheCamera } from '../Camera'
-import { U_PROJECTIONMATRIX, U_VIEWMATRIX, U_TEXTURE, ATTR_POSITION, U_MODELMATRIX, U_NORMALMATRIX } from './sharedLiterals'
-import { common } from './ShaderCommons'
-import { tempVector1 } from '../temps'
-import { Vector2 } from '../Math/Vector2'
-import { Vector4 } from '../Math/Vector4'
-import { Texture } from './Texture'
+import { gl } from '../Graphics.js'
+import { Vector3 } from '../Math/Vector3.js'
+import { Matrix3 } from '../Math/Matrix3.js'
+import { Matrix4 } from '../Math/Matrix4.js'
+import { TheCamera } from '../Camera.js'
+import { U_PROJECTIONMATRIX, U_VIEWMATRIX, ATTR_POSITION, U_MODELMATRIX, U_NORMALMATRIX } from './sharedLiterals.js'
+import { common } from './ShaderCommons.js'
+import { Vector2 } from '../Math/Vector2.js'
+import { Vector4 } from '../Math/Vector4.js'
 
 function createShader (type, source) {
   var shader = gl.createShader(type)

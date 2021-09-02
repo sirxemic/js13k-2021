@@ -3,6 +3,7 @@ const webpack = require('webpack')
 const packageJson = require('./package.json')
 
 module.exports = {
+  mode: 'development',
   entry: {
     app: ['./src/entry.js']
   },
@@ -25,6 +26,8 @@ module.exports = {
   ],
   devServer: {
     host: '0.0.0.0',
-    disableHostCheck: true
+    static: [
+      'src'
+    ]
   }
 }

@@ -41,6 +41,16 @@ export function pick (...args) {
   return args[Math.floor(Math.random() * args.length)]
 }
 
+export function closestModulo (target, number, base) {
+  while (number < target - base / 2) {
+    number += base
+  }
+  while (number > target + base / 2) {
+    number -= base
+  }
+  return number
+}
+
 /**
  * Image generation utilities
  */

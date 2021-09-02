@@ -1,7 +1,7 @@
-import { TheAudioContext, setReverbDestination } from './Audio/Context'
-import { createAudioBuffer } from './Audio/SoundGeneration'
-import { createReverbIR } from './Audio/Samples/ReverbIR'
-import { generateStarField } from './StarFieldGenerator'
+import { TheAudioContext, setReverbDestination } from './Audio/Context.js'
+import { createAudioBuffer } from './Audio/SoundGeneration.js'
+import { createReverbIR } from './Audio/Samples/ReverbIR.js'
+import { generateStarField } from './StarFieldGenerator.js'
 
 export let StarFieldTexture
 

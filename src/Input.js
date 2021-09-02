@@ -1,67 +1,131 @@
-import { TheCanvas } from './Graphics'
-import { TheCamera } from './Camera'
-import { Vector3 } from './Math/Vector3'
+import { TheCanvas } from './Graphics.js'
+import { TheCamera } from './Camera.js'
+import { Vector3 } from './Math/Vector3.js'
 
 export let Input = {
   x: -1000,
   y: -1000,
+  mouseX: 300,
+  mouseY: 300,
+  dragX: 0,
+  dragY: 0,
   scale: 1,
-  mousePress: 0,
+  usingMouse: false,
+  pointerDown: false,
+  dragging: false,
 
   postUpdate () {
-    Input.mousePress = 0
+    this.dragX = 0
+    this.dragY = 0
   }
 }
 
-function updateMousePos (e) {
+function pointerPosToGridPos (e) {
   const dx = 2 * e.pageX / TheCanvas.width - 1
   const dy = 1 - 2 * e.pageY / TheCanvas.height
 
-  const origin = TheCamera.matrix.getTranslation(new Vector3())
+  return TheCamera.getRayGridIntersection(dx, dy)
+}
 
-  const direction = new Vector3(dx, dy, 0.5)
-  direction.unproject(TheCamera)
-  direction.subtract(origin)
-  direction.normalize()
+function updateMousePos (e) {
+  const point = pointerPosToGridPos(e)
 
-  const t = origin.z / direction.z
-
-  const intersection = origin.addScaled(direction, -t)
-
-  Input.x = intersection.x
-  Input.y = intersection.y
+  Input.mouseX = e.pageX
+  Input.mouseY = e.pageY
+  Input.x = point.x
+  Input.y = point.y
 }
 
 let touched = false
-let usingMouse = false
 
 function onMouseMove (e) {
-  usingMouse = true
+  Input.usingMouse = true
   updateMousePos(e)
 }
 
 document.body.addEventListener('mousedown', e => {
-  if (!usingMouse) {
+  if (!Input.usingMouse) {
     return
   }
 
   if (e.button === 0) {
     updateMousePos(e)
-    Input.mousePress = 1
+    Input.pointerDown = true
   }
 })
 
-document.addEventListener('touchstart', e => {
-  if (usingMouse) {
+document.body.addEventListener('mouseup', e => {
+  if (!Input.usingMouse) {
     return
   }
+
+  if (e.button === 0) {
+    updateMousePos(e)
+    Input.pointerDown = false
+  }
+})
+
+let previousTouchPos = {}
+
+document.addEventListener('touchstart', e => {
+  if (Input.usingMouse) {
+    return
+  }
+
+  e.preventDefault()
 
   if (!touched) {
     document.body.removeEventListener('mousemove', onMouseMove)
   }
 
-  updateMousePos(e.changedTouches[0])
-  Input.mousePress = 1
+  if (e.touches.length > 1) {
+    Input.panning = true
+    Input.dragX = 0
+    Input.dragY = 0
+  } else {
+    updateMousePos(e.changedTouches[0])
+    Input.pointerDown = true
+  }
+
+  for (const touch of e.touches) {
+    previousTouchPos[touch.identifier] = pointerPosToGridPos(touch)
+  }
+})
+
+document.addEventListener('gesturestart', function (e) {
+  e.preventDefault();
+})
+
+document.addEventListener('touchmove', e => {
+  e.preventDefault()
+
+  updateMousePos(e.touches[0])
+
+  let dx = 0
+  let dy = 0
+  for (const touch of e.touches) {
+    const pos = pointerPosToGridPos(touch)
+    dx -= pos.x - previousTouchPos[touch.identifier].x
+    dy -= pos.y - previousTouchPos[touch.identifier].y
+    previousTouchPos[touch.identifier] = pointerPosToGridPos(touch)
+  }
+
+  Input.dragX = dx / e.touches.length
+  Input.dragY = dy / e.touches.length
+})
+
+document.addEventListener('touchend', e => {
+  if (Input.usingMouse) {
+    return
+  }
+
+  if (e.touches.length === 1) {
+    Input.panning = false
+    Input.dragX = 0
+    Input.dragY = 0
+  } else if (e.touches.length === 0) {
+    Input.pointerDown = false
+  }
 })
 
 document.body.addEventListener('mousemove', onMouseMove)

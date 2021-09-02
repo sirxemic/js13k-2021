@@ -1,7 +1,5 @@
-import { contextSampleRate, TheAudioContext } from './Context'
-import { EnvelopeSampler } from '../utils'
-
-// D:\JUCE\modules\juce_audio_basics\effects\juce_IIRFilter.cpp
+import { contextSampleRate, TheAudioContext } from './Context.js'
+import { EnvelopeSampler } from '../utils.js'
 
 export function sampleSine (position) {
   return Math.sin(2 * Math.PI * position)

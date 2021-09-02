@@ -1,3 +1,3 @@
 export const classNames = {
-  startButton: 'a'
+  header: 'a'
 }

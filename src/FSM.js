@@ -5,7 +5,7 @@ export class FSM {
   }
 
   setState (name) {
-    this.fsm[this.activeState].leave && this.fsm[this.activeState].leave()
+    this.fsm[this.activeState].leave?.()
 
     this.newState = name
   }
@@ -14,8 +14,8 @@ export class FSM {
     if (this.newState) {
       this.activeState = this.newState
       this.newState = null
-      this.fsm[this.activeState].enter && this.fsm[this.activeState].enter()
+      this.fsm[this.activeState].enter?.()
     }
-    this.fsm[this.activeState].execute && this.fsm[this.activeState].execute()
+    this.fsm[this.activeState].execute?.()
   }
 }

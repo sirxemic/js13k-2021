@@ -1,4 +1,4 @@
-import { classNames } from './classNames'
+import { classNames } from './classNames.js'
 
 // <dev-only>
 for (let key in classNames) {
@@ -11,7 +11,8 @@ function getElement (name) {
 }
 
 export function updateUI () {
-
+  // TODO
+  getElement(classNames.header).textContent = 'Easy puzzle'
 }
 
 function processMonetization () {

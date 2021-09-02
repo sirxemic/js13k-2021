@@ -1,4 +1,4 @@
-import { TheAudioContext, TheAudioDestination, TheReverbDestination } from './Audio/Context'
+import { TheAudioContext, TheAudioDestination, TheReverbDestination } from './Audio/Context.js'
 
 export function playSample (sample, volume = 1, toReverb = false) {
   let source = TheAudioContext.createBufferSource()

@@ -1,4 +1,4 @@
-import { Geometry } from '../Geometry'
+import { Geometry } from '../Geometry.js'
 
 const N = 32
 const vertices = []

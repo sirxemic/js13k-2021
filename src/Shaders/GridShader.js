@@ -4,14 +4,14 @@ import {
   U_PROJECTIONMATRIX,
   ATTR_POSITION,
   U_TEXTURE_STARS
-} from '../Graphics/sharedLiterals'
-import { ShaderProgram } from '../Graphics/ShaderProgram'
+} from '../Graphics/sharedLiterals.js'
+import { ShaderProgram } from '../Graphics/ShaderProgram.js'
 
 export const vertexShader = `/*glsl*/
-varying vec3 position;
+varying vec3 vp;
 
 void main() {
-  position = (${U_MODELMATRIX} * vec4(${ATTR_POSITION}, 1.0)).xyz;
+  vp = (${U_MODELMATRIX} * vec4(${ATTR_POSITION}, 1.0)).xyz;
 
   gl_Position = ${U_PROJECTIONMATRIX} * ${U_VIEWMATRIX} * ${U_MODELMATRIX} * vec4(${ATTR_POSITION}, 1.0);
 }
@@ -20,14 +20,16 @@ void main() {
 export const fragmentShader = `/*glsl*/
 uniform sampler2D ${U_TEXTURE_STARS};
 
-varying vec3 position;
+varying vec3 vp;
 
 void main() {
-  vec4 starsData = texture2D(${U_TEXTURE_STARS}, position.xy * 0.211);
-  vec2 p = position.xy * 0.5 + 0.53;
-  float x = mod(p.x, 1.0) < 0.06 ? 1.0 : 0.0;
-  x += mod(p.y, 1.0) < 0.06 ? 1.0 : 0.0;
-  gl_FragColor = vec4(vec3(min(0.1, x) + starsData.r * starsData.g), 1.0);
+  vec4 starsData = texture2D(${U_TEXTURE_STARS}, vp.xy * 0.211);
+  vec2 p = vp.xy - 1.0;
+  float x = abs(2.*fract(.5 * p.x)-1.);
+  float y = abs(2.*fract(.5 * p.y)-1.);
+
+  float g = smoothstep(0.2, 0.4, sqrt(pow(x, 16.0) + pow(y, 16.0)) * 2.0 - 1.0);
+  gl_FragColor = vec4(vec3(g * 0.05 + starsData.r * starsData.g), 1.0);
 }
 `
 

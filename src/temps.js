@@ -1,5 +1,5 @@
-import { Matrix4 } from './Math/Matrix4'
-import { Vector3 } from './Math/Vector3'
+import { Matrix4 } from './Math/Matrix4.js'
+import { Vector3 } from './Math/Vector3.js'
 
 export const tempMatrix4 = new Matrix4()
 export const tempVector1 = new Vector3()

@@ -1,5 +1,5 @@
-import { Texture } from './Graphics/Texture'
-import { generateImage } from './utils'
+import { Texture } from './Graphics/Texture.js'
+import { generateImage } from './utils.js'
 
 export async function generateStarField () {
   const SIZE = 512

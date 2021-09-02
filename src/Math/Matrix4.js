@@ -1,4 +1,4 @@
-import { Vector3 } from './Vector3'
+import { Vector3 } from './Vector3.js'
 
 const identity = [
   1,0,0,0,
@@ -182,13 +182,13 @@ export class Matrix4 {
     ])
   }
 
-  fromPerspective (fovx, aspect, near, far) {
-    const f = 1 / Math.tan(fovx / 2)
+  fromPerspective (fovY, aspect, near, far) {
+    const f = 1 / Math.tan(fovY / 2)
     const nf = 1 / (near - far)
 
     this.els.set([
-      f, 0, 0, 0,
-      0, f * aspect, 0, 0,
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
       0, 0, (far + near) * nf, -1,
       0, 0, 2 * far * near * nf, 0
     ])

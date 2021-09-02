@@ -1,6 +1,6 @@
-import { Matrix4 } from './Math/Matrix4'
-import { Matrix3 } from './Math/Matrix3'
-import { U_MODELMATRIX, U_NORMALMATRIX } from './Graphics/sharedLiterals'
+import { Matrix4 } from './Math/Matrix4.js'
+import { Matrix3 } from './Math/Matrix3.js'
+import { U_MODELMATRIX, U_NORMALMATRIX } from './Graphics/sharedLiterals.js'
 
 export class Transform3D {
   constructor () {

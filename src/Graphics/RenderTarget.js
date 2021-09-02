@@ -1,5 +1,5 @@
-import { gl } from '../Graphics'
-import { Texture } from './Texture'
+import { gl } from '../Graphics.js'
+import { Texture } from './Texture.js'
 
 export class RenderTarget extends Texture {
   constructor (width, height) {

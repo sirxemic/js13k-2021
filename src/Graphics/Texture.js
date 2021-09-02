@@ -1,4 +1,4 @@
-import { gl } from '../Graphics'
+import { gl } from '../Graphics.js'
 
 export class Texture {
   constructor ({ width, height, source, repeat }) {
