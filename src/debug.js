@@ -13,7 +13,7 @@ export function debug (...stuff) {
     element.style.zIndex = '10000'
     element.style.background = '#000'
     element.style.color = '#fff'
-    element.style.whiteSpace = 'pre'
+    element.style.whiteSpace = 'pre-wrap'
     document.body.appendChild(element)
   }
 

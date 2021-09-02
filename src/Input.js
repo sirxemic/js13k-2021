@@ -1,22 +1,22 @@
 import { TheCanvas } from './Graphics.js'
 import { TheCamera } from './Camera.js'
-import { Vector3 } from './Math/Vector3.js'
+import { debug } from './debug.js'
 
 export let Input = {
   x: -1000,
   y: -1000,
   mouseX: 300,
   mouseY: 300,
-  dragX: 0,
-  dragY: 0,
+  panX: 0,
+  panY: 0,
   scale: 1,
   usingMouse: false,
   pointerDown: false,
-  dragging: false,
+  panning: false,
 
   postUpdate () {
-    this.dragX = 0
-    this.dragY = 0
+    this.panX = 0
+    this.panY = 0
   }
 }
 
@@ -80,8 +80,8 @@ document.addEventListener('touchstart', e => {
 
   if (e.touches.length > 1) {
     Input.panning = true
-    Input.dragX = 0
-    Input.dragY = 0
+    Input.panX = 0
+    Input.panY = 0
   } else {
     updateMousePos(e.changedTouches[0])
     Input.pointerDown = true
@@ -90,10 +90,12 @@ document.addEventListener('touchstart', e => {
   for (const touch of e.touches) {
     previousTouchPos[touch.identifier] = pointerPosToGridPos(touch)
   }
+
+  debugPreviousTouchPos('touchstart')
 })
 
-document.addEventListener('gesturestart', function (e) {
-  e.preventDefault();
+document.addEventListener('gesturestart', e => {
+  e.preventDefault()
 })
 
 document.addEventListener('touchmove', e => {
@@ -110,19 +112,22 @@ document.addEventListener('touchmove', e => {
     previousTouchPos[touch.identifier] = pointerPosToGridPos(touch)
   }
 
-  Input.dragX = dx / e.touches.length
-  Input.dragY = dy / e.touches.length
+  Input.panX = dx / e.touches.length
+  Input.panY = dy / e.touches.length
 })
 
 document.addEventListener('touchend', e => {
+  for (const touch of e.changedTouches) {
+    delete previousTouchPos[touch.identifier]
+  }
   if (Input.usingMouse) {
     return
   }
 
   if (e.touches.length === 1) {
     Input.panning = false
-    Input.dragX = 0
-    Input.dragY = 0
+    Input.panX = 0
+    Input.panY = 0
   } else if (e.touches.length === 0) {
     Input.pointerDown = false
   }

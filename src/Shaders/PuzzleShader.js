@@ -37,7 +37,7 @@ vec3 hsv2rgb(vec3 c)
 
 void main() {
   vec4 data = texture2D(${U_TEXTURE}, uv);
-  vec4 starData = texture2D(${U_TEXTURE_STARS}, uv + vp.z + ${U_TIME});
+  vec4 starData = texture2D(${U_TEXTURE_STARS}, uv + 3.714 * vp.z + ${U_TIME});
 
   float sn = noise(vp);
   float sn2 = noise(vec3(vp.xy, 10.0));

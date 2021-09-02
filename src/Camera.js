@@ -4,6 +4,7 @@ import { FOVY } from './constants.js'
 import { tempVector1, tempVector2, tempVector3 } from './temps.js'
 import { Input } from './Input.js'
 import { delta } from './globals.js'
+import { Vector3 } from './Math/Vector3.js'
 
 class Camera {
   constructor () {
@@ -13,6 +14,13 @@ class Camera {
     this.viewMatrix = new Matrix4()
     this.x = 0
     this.y = 0
+    this.zoom = 1
+
+    document.addEventListener('wheel', this.onWheel.bind(this))
+  }
+
+  onWheel (e) {
+    this.zoom *= Math.pow(2, e.deltaY * 0.001)
   }
 
   setPosition (x, y) {
@@ -21,11 +29,7 @@ class Camera {
   }
 
   step () {
-    if (Input.dragging) {
-      this.x += Input.dragX
-      this.y += Input.dragY
-    }
-    else if (Input.usingMouse) {
+    if (Input.usingMouse) {
       if (Input.mouseX < 100) this.x -= delta * (100 - Input.mouseX) / 10
       if (Input.mouseY < 100) this.y += delta * (100 - Input.mouseY) / 10
       if (Input.mouseX > TheCanvas.width - 100) this.x += delta * (Input.mouseX - TheCanvas.width + 100) / 10
@@ -33,7 +37,7 @@ class Camera {
     }
 
     const lookAt = tempVector1.set(this.x, this.y, 0)
-    const lookFrom = tempVector2.set(this.x, this.y - 15, 30)
+    const lookFrom = tempVector2.set(this.x, this.y - 5 * this.zoom, 18 * this.zoom)
     const up = tempVector3.set(0, 0, 1)
     this.matrix.setTranslation(lookFrom)
     this.matrix.lookAt(lookFrom, lookAt, up)
@@ -45,7 +49,7 @@ class Camera {
   }
 
   getRayGridIntersection (x, y) {
-    const origin = this.matrix.getTranslation(tempVector1)
+    const origin = this.matrix.getTranslation(new Vector3())
 
     const direction = tempVector2.set(x, y, 0.5)
     direction.unproject(this)
