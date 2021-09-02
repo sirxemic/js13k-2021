@@ -12,8 +12,6 @@ export class Puzzle {
       y: this.height / 2 - 0.5
     }
 
-    TheCamera.setPosition(0, 0)
-
     this.centers = [
       new Vector2(2, 1),
       new Vector2(0.5, 2),
@@ -47,8 +45,8 @@ export class Puzzle {
       { x: 0, y: 4},
       { x: 0, y: 3},
       { x: 4, y: 3}
-    ].forEach(item => {
-      const tile = this.getTileAt(item.x, item.y)
+    ].forEach(pos => {
+      const tile = this.getTileAt(pos)
       tile.id = 0
     })
 
@@ -59,8 +57,8 @@ export class Puzzle {
       { x: 1, y: 3},
       { x: 4, y: 1},
       { x: 4, y: 0}
-    ].forEach(item => {
-      const tile = this.getTileAt(item.x, item.y)
+    ].forEach(pos => {
+      const tile = this.getTileAt(pos)
       tile.id = 1
     })
 
@@ -71,83 +69,81 @@ export class Puzzle {
       { x: 4, y: 4},
       { x: 2, y: 3},
       { x: 3, y: 5}
-    ].forEach(item => {
-      const tile = this.getTileAt(item.x, item.y)
+    ].forEach(pos => {
+      const tile = this.getTileAt(pos)
       tile.id = 2
     })
 
     ;[
       { x: 2, y: 2}
-    ].forEach(item => {
-      const tile = this.getTileAt(item.x, item.y)
+    ].forEach(pos => {
+      const tile = this.getTileAt(pos)
       tile.id = 3
     })
 
     ;[
       { x: 4, y: 2}
-    ].forEach(item => {
-      const tile = this.getTileAt(item.x, item.y)
+    ].forEach(pos => {
+      const tile = this.getTileAt(pos)
       tile.id = 4
     })
 
     this.updateConnections()
   }
 
-  getTileAt(x, y) {
-    if (window.BLAAT) console.log(x, y)
+  getTileAt ({ x, y }) {
     if (x < 0) x %= this.width
     x = (x + this.width) % this.width
     if (y < 0) y %= this.height
     y = (y + this.height) % this.height
-    if (window.BLAAT) console.log(x, y)
     return this.tiles[x + y * this.width]
   }
 
-  getIdAt(x, y) {
-    return this.getTileAt(x, y).id
+  getIdAt (pos) {
+    return this.getTileAt(pos).id
   }
 
-  setAt (x, y, id) {
-    this.getTileAt(x, y).id = id
+  setAt (pos, id) {
+    this.getTileAt(pos).id = id
   }
 
-  setSymmetricallyAt (x, y, id) {
-    const opposite = this.getOpposite(x, y, id)
+  setSymmetricallyAt (pos, id) {
+    const opposite = this.getOpposite(pos, id)
 
     for (const center of this.centers) {
-      if (this.touchesCenter(x, y, center)) {
+      if (this.touchesCenter(pos, center)) {
         return
       }
-      if (this.touchesCenter(opposite.x, opposite.y, center)) {
+      if (this.touchesCenter(opposite, center)) {
         return
       }
     }
 
     // TODO: check if this even is intuitive
-    let oldId = this.getIdAt(x, y)
+    let oldId = this.getIdAt(pos)
     if (oldId !== -1 && oldId !== id) {
-      const opposite2 = this.getOpposite(x, y, oldId)
-      if (this.canUnsetAt(opposite2.x, opposite2.y)) {
-        this.setAt(opposite2.x, opposite2.y, -1)
+      const opposite2 = this.getOpposite(pos, oldId)
+      if (this.canUnsetAt(opposite2)) {
+        this.setAt(opposite2, -1)
       }
     }
 
     // TODO: check if this even is intuitive
-    oldId = this.getIdAt(opposite.x, opposite.y)
+    oldId = this.getIdAt(opposite)
     if (oldId !== -1 && oldId !== id) {
-      const oppositeOpposite = this.getOpposite(opposite.x, opposite.y, oldId)
-      if (this.canUnsetAt(oppositeOpposite.x, oppositeOpposite.y)) {
-        this.setAt(oppositeOpposite.x, oppositeOpposite.y, -1)
+      const oppositeOpposite = this.getOpposite(opposite, oldId)
+      if (this.canUnsetAt(oppositeOpposite)) {
+        this.setAt(oppositeOpposite, -1)
       }
     }
 
-    this.setAt(x, y, id)
-    this.setAt(opposite.x, opposite.y, id)
+    this.setAt(pos, id)
+    this.setAt(opposite, id)
 
     this.updateConnections()
   }
 
-  getOpposite (x, y, id) {
+  getOpposite ({ x, y }, id) {
     const center = this.centers[id]
     return {
       x: 2 * center.x - x - 1,
@@ -155,30 +151,29 @@ export class Puzzle {
     }
   }
 
-  unsetSymmetricallyAt (x, y) {
-    console.log('unset Symmetrically At', x, y)
-    const id = this.getIdAt(x, y)
+  unsetSymmetricallyAt (pos) {
+    const id = this.getIdAt(pos)
     if (id < 0) {
       return
     }
 
 
-    if (this.canUnsetAt(x, y)) {
-      this.setAt(x, y, -1)
+    if (this.canUnsetAt(pos)) {
+      this.setAt(pos, -1)
 
-      const opposite = this.getOpposite(x, y, id)
+      const opposite = this.getOpposite(pos, id)
 
-      if (this.canUnsetAt(opposite.x, opposite.y)) {
-        this.setAt(opposite.x, opposite.y, -1)
+      if (this.canUnsetAt(opposite)) {
+        this.setAt(opposite, -1)
       }
 
       this.updateConnections()
     }
   }
 
-  canUnsetAt (x, y) {
+  canUnsetAt (pos) {
     for (const center of this.centers) {
-      if (this.touchesCenter(x, y, center)) {
+      if (this.touchesCenter(pos, center)) {
         return false
       }
     }
@@ -186,7 +181,7 @@ export class Puzzle {
     return true
   }
 
-  touchesCenter (x, y, center) {
+  touchesCenter ({ x, y }, center) {
     if (x < 0) x %= this.width
     x = (x + this.width) % this.width
     if (y < 0) y %= this.height
@@ -199,20 +194,20 @@ export class Puzzle {
     return false
   }
 
-  isConnectedAt(id, x, y) {
-    return this.getTileAt(x, y).id === id
+  isConnectedAt(id, pos) {
+    return this.getTileAt(pos).id === id
   }
 
   updateConnections () {
     this.connections = this.tiles.map(({ x, y, id }) => {
-      const tileLeft = this.isConnectedAt(id, x - 1, y)
-      const tileRight = this.isConnectedAt(id, x + 1, y)
-      const tileDown = this.isConnectedAt(id, x, y - 1)
-      const tileUp = this.isConnectedAt(id, x, y + 1)
-      const tileUpLeft = tileLeft && tileUp && this.isConnectedAt(id, x - 1, y + 1)
-      const tileUpRight = tileRight && tileUp && this.isConnectedAt(id, x + 1, y + 1)
-      const tileDownLeft = tileLeft && tileDown && this.isConnectedAt(id, x - 1, y - 1)
-      const tileDownRight = tileRight && tileDown && this.isConnectedAt(id, x + 1, y - 1)
+      const tileLeft = this.isConnectedAt(id, { x: x - 1, y })
+      const tileRight = this.isConnectedAt(id, { x: x + 1, y })
+      const tileDown = this.isConnectedAt(id, { x, y: y - 1 })
+      const tileUp = this.isConnectedAt(id, { x, y: y + 1 })
+      const tileUpLeft = tileLeft && tileUp && this.isConnectedAt(id, { x: x - 1, y: y + 1 })
+      const tileUpRight = tileRight && tileUp && this.isConnectedAt(id, { x: x + 1, y: y + 1 })
+      const tileDownLeft = tileLeft && tileDown && this.isConnectedAt(id, { x: x - 1, y: y - 1 })
+      const tileDownRight = tileRight && tileDown && this.isConnectedAt(id, { x: x + 1, y: y - 1 })
 
       let h = tileLeft && tileRight ? 2 : tileLeft ? -1 : tileRight ? 1 : 0
       let v = tileUp && tileDown ? 2 : tileDown ? -1 : tileUp ? 1 : 0
@@ -226,7 +221,7 @@ export class Puzzle {
     })
   }
 
-  getConnection (x, y) {
+  getConnection ({ x, y }) {
     return this.connections[x + y * this.width]
   }
 }

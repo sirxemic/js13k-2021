@@ -46,9 +46,7 @@ export class PuzzleRenderer {
     this.renderMask()
     gl.viewport(0, 0, TheCanvas.width, TheCanvas.height)
     gl.disable(gl.DEPTH_TEST)
-    gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-    gl.blendEquation(gl.FUNC_ADD)
 
     PuzzleShader.use({
       [U_TEXTURE]: { slot: 0, texture: this.mask },
@@ -56,15 +54,19 @@ export class PuzzleRenderer {
       [U_TIME]: performance.now() / 100000
     })
 
-    const modelMatrix = new Matrix4()
-    modelMatrix.set3x3(width, 0, 0, 0, height, 0, 0, 0, 1)
+    const modelMatrix = new Matrix4([
+      width, 0, 0, 0,
+      0, height, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ])
 
-    const currentCellPos = TheCamera.getRayGridIntersection(0, 0)
+    const currentCellPos = TheCamera.getRayGridIntersection(TheCanvas.width / 2, TheCanvas.height / 2)
     currentCellPos.x = Math.round(currentCellPos.x / (width * 2))
     currentCellPos.y = Math.round(currentCellPos.y / (height * 2))
 
-    for (let x = -1; x <= 1; x++) {
-      for (let y = -1; y <= 1; y++) {
+    for (let x = -3; x <= 3; x++) {
+      for (let y = -2; y <= 2; y++) {
         PuzzleShader.use({
           [U_MODELMATRIX]: modelMatrix.setTranslation(
             new Vector3(
@@ -78,7 +80,6 @@ export class PuzzleRenderer {
       }
     }
 
-    gl.disable(gl.BLEND)
     gl.enable(gl.DEPTH_TEST)
   }
 
@@ -88,7 +89,7 @@ export class PuzzleRenderer {
       [U_WORLD_SIZE]: new Vector2(currentPuzzle.width, currentPuzzle.height),
       [U_COLOR]: currentPuzzle.colorIds[tile.id] / 6,
       [U_GALAXY_CENTER]: currentPuzzle.centers[tile.id],
-      [U_TILE_CONNECTION]: currentPuzzle.getConnection(tile.x, tile.y)
+      [U_TILE_CONNECTION]: currentPuzzle.getConnection(tile)
     })
     Quad.draw()
   }

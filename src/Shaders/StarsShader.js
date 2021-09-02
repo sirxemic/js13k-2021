@@ -18,16 +18,14 @@ void main() {
 `
 
 export const fragmentShader = `/*glsl*/
+uniform sampler2D ${U_TEXTURE_STARS};
+
 varying vec3 vp;
 
 void main() {
-  vec2 p = vp.xy - 1.0;
-  float x = abs(2.*fract(.5 * p.x)-1.);
-  float y = abs(2.*fract(.5 * p.y)-1.);
-
-  float g = smoothstep(0.2, 0.4, sqrt(pow(x, 16.0) + pow(y, 16.0)) * 2.0 - 1.0);
-  gl_FragColor = vec4(vec3(1.0), g * 0.05);
+  vec4 d = texture2D(${U_TEXTURE_STARS}, vp.xy * 0.211);
+  gl_FragColor = vec4(vec3(1.0), d.r * d.g);
 }
 `
 
-export const GridShader = new ShaderProgram(vertexShader, fragmentShader)
+export const StarsShader = new ShaderProgram(vertexShader, fragmentShader)

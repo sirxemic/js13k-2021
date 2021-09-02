@@ -1,10 +1,10 @@
 import { Matrix4 } from './Math/Matrix4.js'
 import { TheCanvas } from './Graphics.js'
 import { FOVY } from './constants.js'
-import { tempVector1, tempVector2, tempVector3 } from './temps.js'
 import { Input } from './Input.js'
-import { delta } from './globals.js'
+import { currentPuzzle, delta } from './globals.js'
 import { Vector3 } from './Math/Vector3.js'
+import { clamp } from './utils.js'
 
 class Camera {
   constructor () {
@@ -19,13 +19,15 @@ class Camera {
     document.addEventListener('wheel', this.onWheel.bind(this))
   }
 
-  onWheel (e) {
-    this.zoom *= Math.pow(2, e.deltaY * 0.001)
+  get position()
+  {
+    return this.matrix.getTranslation(new Vector3())
   }
 
-  setPosition (x, y) {
-    this.x = x
-    this.y = y
+  onWheel (e) {
+    this.zoom *= Math.pow(2, e.deltaY * 0.001)
+
+    this.zoom = clamp(this.zoom, 1, currentPuzzle.width / 2)
   }
 
   step () {
@@ -36,9 +38,9 @@ class Camera {
       if (Input.mouseY > TheCanvas.height - 100) this.y -= delta * (Input.mouseY - TheCanvas.height + 100) / 10
     }
 
-    const lookAt = tempVector1.set(this.x, this.y, 0)
-    const lookFrom = tempVector2.set(this.x, this.y - 5 * this.zoom, 18 * this.zoom)
-    const up = tempVector3.set(0, 0, 1)
+    const lookAt = new Vector3(this.x, this.y, 0)
+    const lookFrom = new Vector3(this.x, this.y - 5 * this.zoom, 18 * this.zoom)
+    const up = new Vector3(0, 0, 1)
     this.matrix.setTranslation(lookFrom)
     this.matrix.lookAt(lookFrom, lookAt, up)
 
@@ -48,10 +50,25 @@ class Camera {
     this.projectionMatrixInverse.getInverse(this.projectionMatrix)
   }
 
-  getRayGridIntersection (x, y) {
-    const origin = this.matrix.getTranslation(new Vector3())
+  handlePanStart (e) {
 
-    const direction = tempVector2.set(x, y, 0.5)
+  }
+
+  handlePanUpdate (e) {
+
+  }
+
+  handlePanEnd (e) {
+
+  }
+
+  getRayGridIntersection (x, y) {
+    x = 2 * x / TheCanvas.width - 1
+    y = 1 - 2 * y / TheCanvas.height
+
+    const origin = this.position
+
+    const direction = new Vector3(x, y, 0.5)
     direction.unproject(this)
     direction.subtract(origin)
     direction.normalize()

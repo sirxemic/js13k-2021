@@ -3,9 +3,9 @@ export function minifyShaders (code) {
     const s = JSON.parse(shaderCode)
     return JSON.stringify(
       s.substr(8)
+        .replace(/\/\/.+/g, '')
         .replace(/\s+/g, ' ')
         .replace(/^\s+|\s+$/g, '')
-        .replace(/\/\/.+/g, '')
         .replace(/\/\*[\s\S]+?\*\//g, '')
         .replace(/\b0(\.\d+)\b/g, (_, g1) => g1)
         .replace(/\b(\d+\.)0\b/g, (_, g1) => g1)

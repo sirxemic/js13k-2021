@@ -51,13 +51,13 @@ export async function build({ fixBeforeMinify, fixAfterHtmlMinify }) {
   ]
 
   for (const func of postProcessFunctions) {
-    console.log('Code size:', code.length)
-    console.log(`Executing ${func.name}...`)
+    // console.log('Code size:', code.length)
+    // console.log(`Executing ${func.name}...`)
     code = await func(code)
   }
 
-  console.log('Code size:', code.length)
-  console.log(`Generating and minifying HTML...`)
+  // console.log('Code size:', code.length)
+  // console.log(`Generating and minifying HTML...`)
   let minifiedHtml = fs.readFileSync('src/index.html', { encoding: 'utf-8' })
   minifiedHtml = minifyHtml(minifiedHtml)
   minifiedHtml = fixAfterHtmlMinify(minifiedHtml)

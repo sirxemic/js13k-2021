@@ -1,18 +1,18 @@
 import { TheCanvas } from './Graphics.js'
 import { TheCamera } from './Camera.js'
-import { debug } from './debug.js'
 
 export let Input = {
   x: -1000,
   y: -1000,
   mouseX: 300,
   mouseY: 300,
-  panX: 0,
-  panY: 0,
   scale: 1,
   usingMouse: false,
   pointerDown: false,
-  panning: false,
+
+  onPanStart: () => {},
+  onPanUpdate: () => {},
+  onPanEnd: () => {},
 
   postUpdate () {
     this.panX = 0
@@ -20,20 +20,9 @@ export let Input = {
   }
 }
 
-function pointerPosToGridPos (e) {
-  const dx = 2 * e.pageX / TheCanvas.width - 1
-  const dy = 1 - 2 * e.pageY / TheCanvas.height
-
-  return TheCamera.getRayGridIntersection(dx, dy)
-}
-
 function updateMousePos (e) {
-  const point = pointerPosToGridPos(e)
-
   Input.mouseX = e.pageX
   Input.mouseY = e.pageY
-  Input.x = point.x
-  Input.y = point.y
 }
 
 let touched = false
@@ -65,7 +54,7 @@ document.body.addEventListener('mouseup', e => {
   }
 })
 
-let previousTouchPos = {}
+let touchStartPositions = {}
 
 document.addEventListener('touchstart', e => {
   if (Input.usingMouse) {
@@ -78,20 +67,18 @@ document.addEventListener('touchstart', e => {
     document.body.removeEventListener('mousemove', onMouseMove)
   }
 
+  for (const touch of e.changedTouches) {
+    touchStartPositions[touch.identifier] = touch
+  }
+
   if (e.touches.length > 1) {
-    Input.panning = true
-    Input.panX = 0
-    Input.panY = 0
+    Input.onPanStart({
+      touchStartPositions
+    })
   } else {
     updateMousePos(e.changedTouches[0])
     Input.pointerDown = true
   }
-
-  for (const touch of e.touches) {
-    previousTouchPos[touch.identifier] = pointerPosToGridPos(touch)
-  }
-
-  debugPreviousTouchPos('touchstart')
 })
 
 document.addEventListener('gesturestart', e => {
@@ -103,31 +90,27 @@ document.addEventListener('touchmove', e => {
 
   updateMousePos(e.touches[0])
 
-  let dx = 0
-  let dy = 0
+  const touchPositions = {}
   for (const touch of e.touches) {
-    const pos = pointerPosToGridPos(touch)
-    dx -= pos.x - previousTouchPos[touch.identifier].x
-    dy -= pos.y - previousTouchPos[touch.identifier].y
-    previousTouchPos[touch.identifier] = pointerPosToGridPos(touch)
+    touchPositions[touch.identifier] = touch
   }
 
-  Input.panX = dx / e.touches.length
-  Input.panY = dy / e.touches.length
+  Input.onPanUpdate({
+    touchPositions
+  })
 })
 
 document.addEventListener('touchend', e => {
   for (const touch of e.changedTouches) {
-    delete previousTouchPos[touch.identifier]
+    delete touchStartPositions[touch.identifier]
   }
+
   if (Input.usingMouse) {
     return
   }
 
   if (e.touches.length === 1) {
-    Input.panning = false
-    Input.panX = 0
-    Input.panY = 0
+    Input.onPanEnd()
   } else if (e.touches.length === 0) {
     Input.pointerDown = false
   }
