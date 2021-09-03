@@ -1,26 +1,22 @@
-import { Vector2 } from './Math/Vector2.js'
 import { Vector4 } from './Math/Vector4.js'
 
+export const INVALID_POS = -2
+export const EMPTY = -1
+
 export class Puzzle {
-  constructor (width, height) {
+  constructor (width, height, centers, wrapping) {
     this.width = width
     this.height = height
+    this.centers = centers
+    this.wrapping = wrapping
 
     this.gridOffset = {
       x: this.width / 2 - 0.5,
       y: this.height / 2 - 0.5
     }
 
-    this.centers = [
-      new Vector2(2, 1),
-      new Vector2(0.5, 2),
-      new Vector2(3, 4.5),
-      new Vector2(2.5, 2.5),
-      new Vector2(4.5, 2.5)
-    ]
-
     this.colorIds = [
-      0, 1, 2, 3, 4
+      0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5
     ]
 
     this.setCenterTiles()
@@ -30,7 +26,7 @@ export class Puzzle {
       (_, index) => {
         const x = index % width
         const y = Math.floor(index / width)
-        return { x, y, id: -1 }
+        return { x, y, id: EMPTY }
       }
     )
 
@@ -43,7 +39,7 @@ export class Puzzle {
 
   isSolved () {
     for (const tile of this.tiles) {
-      if (tile.id === -1) {
+      if (tile.id === EMPTY) {
         return false
       }
     }
@@ -53,6 +49,11 @@ export class Puzzle {
 
   setSymmetricallyAt (pos, id) {
     const opposite = this.getOpposite(pos, id)
+
+    // When not wrapping, the opposite can be outside of the board
+    if (this.getIdAt(opposite) === INVALID_POS) {
+      return
+    }
 
     for (const center of this.centers) {
       if (this.touchesCenter(pos, center)) {
@@ -65,19 +66,19 @@ export class Puzzle {
 
     // TODO: check if this even is intuitive
     let oldId = this.getIdAt(pos)
-    if (oldId !== -1 && oldId !== id) {
+    if (oldId > -1 && oldId !== id) {
       const opposite2 = this.getOpposite(pos, oldId)
       if (this.canUnsetAt(opposite2)) {
-        this.setAt(opposite2, -1)
+        this.setAt(opposite2, EMPTY)
       }
     }
 
     // TODO: check if this even is intuitive
     oldId = this.getIdAt(opposite)
-    if (oldId !== -1 && oldId !== id) {
+    if (oldId > -1 && oldId !== id) {
       const oppositeOpposite = this.getOpposite(opposite, oldId)
       if (this.canUnsetAt(oppositeOpposite)) {
-        this.setAt(oppositeOpposite, -1)
+        this.setAt(oppositeOpposite, EMPTY)
       }
     }
 
@@ -95,12 +96,12 @@ export class Puzzle {
 
 
     if (this.canUnsetAt(pos)) {
-      this.setAt(pos, -1)
+      this.setAt(pos, EMPTY)
 
       const opposite = this.getOpposite(pos, id)
 
       if (this.canUnsetAt(opposite)) {
-        this.setAt(opposite, -1)
+        this.setAt(opposite, EMPTY)
       }
 
       this.updateConnections()
@@ -108,6 +109,12 @@ export class Puzzle {
   }
 
   getTileAt ({ x, y }) {
+    if (!this.wrapping) {
+      if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+        return null
+      }
+      return this.tiles[x + y * this.width]
+    }
     if (x < 0) x %= this.width
     x = (x + this.width) % this.width
     if (y < 0) y %= this.height
@@ -116,7 +123,8 @@ export class Puzzle {
   }
 
   getIdAt (pos) {
-    return this.getTileAt(pos).id
+    const tile = this.getTileAt(pos)
+    return tile ? tile.id : INVALID_POS
   }
 
   setCenterTiles () {
@@ -142,7 +150,12 @@ export class Puzzle {
   }
 
   setAt (pos, id) {
-    this.getTileAt(pos).id = id
+    const tile = this.getTileAt(pos)
+    if (tile === null) {
+      console.log('hmm wat')
+      return
+    }
+    tile.id = id
   }
 
   getOpposite ({ x, y }, id) {
@@ -160,7 +173,7 @@ export class Puzzle {
       }
     }
 
-    return true
+    return this.getIdAt(pos) !== INVALID_POS
   }
 
   touchesCenter ({ x, y }, center) {
@@ -177,7 +190,7 @@ export class Puzzle {
   }
 
   isConnectedAt(id, pos) {
-    return this.getTileAt(pos).id === id
+    return this.getIdAt(pos) === id
   }
 
   updateConnections () {
@@ -194,7 +207,7 @@ export class Puzzle {
         this.getTileAt({ x, y: y - 1 }),
         this.getTileAt({ x, y: y + 1 })
       ].forEach(otherTile => {
-        if (otherTile.id === id && !visited.has(otherTile)) toVisit.push(otherTile)
+        if (otherTile && otherTile.id === id && !visited.has(otherTile)) toVisit.push(otherTile)
       })
     }
 

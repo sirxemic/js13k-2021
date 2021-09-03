@@ -49,6 +49,11 @@ class Camera {
       if (Input.mouseY > TheCanvas.height - margin) this.y -= delta * Math.min(15, (Input.mouseY - TheCanvas.height + margin) * scale)
     }
 
+    if (!currentPuzzle.wrapping) {
+      this.x = clamp(this.x, 0, currentPuzzle.width - 1)
+      this.y = clamp(this.y, 0, currentPuzzle.height - 1)
+    }
+
     this.updateMatrix()
 
     this.viewMatrix.getInverse(this.matrix)

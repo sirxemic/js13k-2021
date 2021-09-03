@@ -82,13 +82,20 @@ export class PuzzleRenderer {
     currentCellPos.x = Math.round(currentCellPos.x / (width * 2))
     currentCellPos.y = Math.round(currentCellPos.y / (height * 2))
 
-    for (let x = -3; x <= 3; x++) {
-      for (let y = -2; y <= 2; y++) {
+    // Don't know why it has to be -5, but it works
+    const offX = (width - 5) / 2
+    const offY = (height - 5) / 2
+
+    const marginH = currentPuzzle.wrappging ? 3 : 0
+    const marginV = currentPuzzle.wrappging ? 2 : 0
+
+    for (let x = -marginH; x <= marginH; x++) {
+      for (let y = -marginV; y <= marginV; y++) {
         PuzzleShader.use({
           [U_MODELMATRIX]: modelMatrix.setTranslation(
             new Vector3(
-              ((x + currentCellPos.x) * width) * 2,
-              ((y + currentCellPos.y) * height) * 2,
+              ((x + currentCellPos.x) * width + offX) * 2,
+              ((y + currentCellPos.y) * height + offY) * 2,
               -0.5
             )
           ),

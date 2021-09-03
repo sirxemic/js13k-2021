@@ -3,7 +3,6 @@ import { gl, TheCanvas } from './Graphics.js'
 import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
 import { updateUI } from './UI.js'
 import { clamp } from './utils.js'
-import { Puzzle } from './Puzzle.js'
 import { loadAssets } from './Assets.js'
 import { loadProgress } from './Progress.js'
 import { PuzzleRenderer } from './PuzzleRenderer.js'
@@ -11,6 +10,7 @@ import { Grid } from './Grid.js'
 import { Selector } from './Selector.js'
 import { StarsLayer } from './StarsLayer.js'
 import { FSM } from './FSM.js'
+import { PuzzleGenerator } from './PuzzleGenerator.js'
 
 function resizeCanvas () {
   TheCanvas.width = window.innerWidth
@@ -38,17 +38,29 @@ let transitionTime
 /**
  * The main state machine
  */
-const PUZZLE_STATE = '1'
-const PUZZLE_END_TRANSITION = '2'
+const PUZZLE_START_TRANSITION = '1'
+const PUZZLE_STATE = '2'
+const PUZZLE_END_TRANSITION = '3'
 
 const mainFSM = new FSM({
-  [PUZZLE_STATE]: {
+  [PUZZLE_START_TRANSITION]: {
     enter () {
-      setCurrentPuzzle(new Puzzle(5, 5))
+      setCurrentPuzzle(new PuzzleGenerator(7, 7).generate())
       renderer = new PuzzleRenderer()
-      selector = new Selector()
       TheCamera.x %= 2
       TheCamera.y %= 2
+    },
+
+    execute () {
+      if (renderer.fadeAmount < 0.2) {
+        mainFSM.setState(PUZZLE_STATE)
+      }
+    }
+  },
+
+  [PUZZLE_STATE]: {
+    enter () {
+      selector = new Selector()
     },
 
     execute () {
@@ -68,11 +80,11 @@ const mainFSM = new FSM({
     execute () {
       transitionTime += delta
       if (transitionTime >= 2) {
-        mainFSM.setState(PUZZLE_STATE)
+        mainFSM.setState(PUZZLE_START_TRANSITION)
       }
     }
   }
-}, PUZZLE_STATE)
+}, PUZZLE_START_TRANSITION)
 
 function step () {
   mainFSM.updateFSM()
@@ -104,18 +116,16 @@ function render () {
 
 let lastTime = 0
 function tick (time) {
-  requestAnimationFrame(tick)
-
   setDelta(clamp((time - lastTime) / 1000, 0.001, 0.5))
   lastTime = time
-  if (isNaN(delta)) {
-    return
+  if (!isNaN(delta)) {
+    step()
+    render()
+
+    updateUI()
   }
 
-  step()
-  render()
-
-  updateUI()
+  requestAnimationFrame(tick)
 }
 
 loadAssets().then(tick)

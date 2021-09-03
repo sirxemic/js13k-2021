@@ -6,8 +6,9 @@ import { gl } from './Graphics.js'
 import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
 import { Matrix4 } from './Math/Matrix4.js'
+import { Puzzle } from './Puzzle.js'
 import { SelectorShader } from './Shaders/SelectorShader.js'
-import { closestModulo, noop } from './utils.js'
+import { clamp, closestModulo, noop } from './utils.js'
 
 export class Cursor {
   constructor ({ x, y }) {
@@ -209,12 +210,18 @@ export class Selector {
   }
 
   getTilePosAtPointer () {
-    const { x, y } = TheCamera.getRayGridIntersection(Input.mouseX, Input.mouseY)
+    let { x, y } = TheCamera.getRayGridIntersection(Input.mouseX, Input.mouseY)
 
-    return {
-      x: Math.round(x / 2) + 2,
-      y: Math.round(y / 2) + 2
+    // Don't know why + 2, but it works
+    x = Math.round(x / 2) + 2
+    y = Math.round(y / 2) + 2
+
+    if (!currentPuzzle.wrapping) {
+      x = clamp(x, 0, currentPuzzle.width - 1)
+      y = clamp(y, 0, currentPuzzle.height - 1)
     }
+
+    return { x, y }
   }
 
   addCursorAtPointer (expected = this.selectedId) {
@@ -224,19 +231,29 @@ export class Selector {
   createCursorsAtOppositeOf ({ x, y }, expected = this.selectedId) {
     const opposite = currentPuzzle.getOpposite({ x, y }, expected)
 
-    opposite.x = closestModulo(x, opposite.x, currentPuzzle.width)
-    opposite.y = closestModulo(y, opposite.y, currentPuzzle.height)
+    if (currentPuzzle.wrapping) {
+      opposite.x = closestModulo(x, opposite.x, currentPuzzle.width)
+      opposite.y = closestModulo(y, opposite.y, currentPuzzle.height)
 
-    for (let ix = -1; ix <= 1; ix++) {
-      for (let iy = -1; iy <= 1; iy++) {
-        this.addCursorAt(
-          {
-            x:  opposite.x + ix * currentPuzzle.width,
-            y: opposite.y + iy * currentPuzzle.height
-          },
-          expected
-        )
+      for (let ix = -1; ix <= 1; ix++) {
+        for (let iy = -1; iy <= 1; iy++) {
+          this.addCursorAt(
+            {
+              x:  opposite.x + ix * currentPuzzle.width,
+              y: opposite.y + iy * currentPuzzle.height
+            },
+            expected
+          )
+        }
       }
+    } else {
+      this.addCursorAt(
+        {
+          x: opposite.x,
+          y: opposite.y
+        },
+        expected
+      )
     }
   }
 
