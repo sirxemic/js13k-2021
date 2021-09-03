@@ -1,13 +1,8 @@
+export const noop = () => {}
+
 /**
  * Some mathematical utilities
  */
-
-export function sign (x) {
-  if (x > 0) return 1
-  if (x < 0) return -1
-  return 0
-}
-
 export function clamp (x, min, max) {
   return Math.min(Math.max(x, min), max)
 }

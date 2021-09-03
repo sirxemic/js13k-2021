@@ -27,6 +27,13 @@ class Camera {
     return new Vector3(this.x, this.y - 5 * this.zoom, 18 * this.zoom)
   }
 
+  updateMatrix () {
+    this.zoom = clamp(this.zoom, 1, currentPuzzle.width / 2)
+    const up = new Vector3(0, 0, 1)
+    this.matrix.setTranslation(this.lookFrom)
+    this.matrix.lookAt(this.lookFrom, this.lookAt, up)
+  }
+
   onWheel (e) {
     this.zoom *= Math.pow(2, Math.sign(e.deltaY) * 0.04)
   }
@@ -40,15 +47,9 @@ class Camera {
       if (Input.mouseY < margin) this.y += delta * Math.min(15, (margin - Input.mouseY) * scale)
       if (Input.mouseX > TheCanvas.width - margin) this.x += delta * Math.min(15, (Input.mouseX - TheCanvas.width + margin) * scale)
       if (Input.mouseY > TheCanvas.height - margin) this.y -= delta * Math.min(15, (Input.mouseY - TheCanvas.height + margin) * scale)
-    } else if (this.panning) {
-      this.x += (this.targetX - this.x) * 0.5
-      this.y += (this.targetY - this.y) * 0.5
     }
 
-    this.zoom = clamp(this.zoom, 1, currentPuzzle.width / 2)
-    const up = new Vector3(0, 0, 1)
-    this.matrix.setTranslation(this.lookFrom)
-    this.matrix.lookAt(this.lookFrom, this.lookAt, up)
+    this.updateMatrix()
 
     this.viewMatrix.getInverse(this.matrix)
 
@@ -60,35 +61,45 @@ class Camera {
     this.panning = true
     this.targetX = this.x
     this.targetY = this.y
-    this.panStartPos = { x: this.x, y: this.y }
-    this.panStartZoom = this.zoom
-    this.touchStartGridPositions = {}
+    this.panStartState = {
+      x: this.x,
+      y: this.y,
+      zoom: this.zoom,
+      touchStartGridPositions: {}
+    }
     for (const id in e) {
-      this.touchStartGridPositions[id] = this.getRayGridIntersection(e[id].pageX, e[id].pageY)
+      this.panStartState.touchStartGridPositions[id] = this.getRayGridIntersection(e[id].pageX, e[id].pageY)
     }
   }
 
   handlePanUpdate (e) {
+    this.x = this.panStartState.x
+    this.y = this.panStartState.y
+    this.zoom = this.panStartState.zoom
+
+    this.updateMatrix()
+
     const ids = Object.keys(e)
-    this.touchGridPositions = {}
+    const touchGridPositions = {}
     for (const id in e) {
-      this.touchGridPositions[id] = this.getRayGridIntersection(e[id].pageX, e[id].pageY)
+      touchGridPositions[id] = this.getRayGridIntersection(e[id].pageX, e[id].pageY)
     }
 
-    const start1 = this.touchStartGridPositions[ids[0]]
-    const start2 = this.touchStartGridPositions[ids[1]]
-    const target1 = this.touchGridPositions[ids[0]]
-    const target2 = this.touchGridPositions[ids[1]]
+    const start1 = this.panStartState.touchStartGridPositions[ids[0]]
+    const start2 = this.panStartState.touchStartGridPositions[ids[1]]
+    const target1 = touchGridPositions[ids[0]]
+    const target2 = touchGridPositions[ids[1]]
 
     const originalCenter = start1.clone().add(start2).multiplyScalar(0.5)
     const originalDistance = start1.distanceTo(start2)
     const newCenter = target1.clone().add(target2).multiplyScalar(0.5)
     const newDistance = target1.distanceTo(target2)
 
-    this.targetX = this.panStartPos.x - (newCenter.x - originalCenter.x) * 2
-    this.targetY = this.panStartPos.y - (newCenter.y - originalCenter.y) * 2
+    const zoomFactor = originalDistance / newDistance
 
-    this.zoom *= originalDistance / newDistance
+    this.x = this.panStartState.x - (newCenter.x - originalCenter.x) * zoomFactor
+    this.y = this.panStartState.y - (newCenter.y - originalCenter.y) * zoomFactor
+    this.zoom = this.panStartState.zoom * zoomFactor
   }
 
   handlePanEnd (e) {

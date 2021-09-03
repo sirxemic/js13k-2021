@@ -7,7 +7,7 @@ import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
 import { Matrix4 } from './Math/Matrix4.js'
 import { SelectorShader } from './Shaders/SelectorShader.js'
-import { closestModulo } from './utils.js'
+import { closestModulo, noop } from './utils.js'
 
 export class Cursor {
   constructor ({ x, y }) {
@@ -173,10 +173,16 @@ export class Selector {
           Input.onPanUpdate = (e) => {
             TheCamera.handlePanUpdate(e)
           }
+
+          Input.onPanEnd = (e) => {
+            fsm.setState(AFTER_MOVING_CAMERA_STATE)
+            TheCamera.handlePanEnd(e)
+          }
         },
 
         leave: () => {
-          Input.onPanUpdate = () => {}
+          Input.onPanEnd = noop
+          Input.onPanUpdate = noop
         }
       },
 
@@ -190,12 +196,10 @@ export class Selector {
     }, DEFAULT_STATE)
 
     Input.onPanStart = (e) => {
-      fsm.setState(MOVING_CAMERA_STATE)
-      TheCamera.handlePanStart(e)
-    }
-    Input.onPanEnd = (e) => {
-      fsm.setState(AFTER_MOVING_CAMERA_STATE)
-      TheCamera.handlePanEnd(e)
+      if (fsm.activeState !== MOVING_CAMERA_STATE) {
+        fsm.setState(MOVING_CAMERA_STATE)
+        TheCamera.handlePanStart(e)
+      }
     }
   }
 

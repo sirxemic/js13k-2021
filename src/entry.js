@@ -1,6 +1,5 @@
 import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
-import { Input } from './Input.js'
 import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
 import { updateUI } from './UI.js'
 import { clamp } from './utils.js'
@@ -83,8 +82,6 @@ function step () {
     selector.step()
   }
   renderer.step()
-
-  Input.postUpdate()
 }
 
 function render () {

@@ -1,3 +1,5 @@
+import { noop } from './utils.js'
+
 export let Input = {
   x: -1000,
   y: -1000,
@@ -7,14 +9,9 @@ export let Input = {
   usingMouse: false,
   pointerDown: false,
 
-  onPanStart: () => {},
-  onPanUpdate: () => {},
-  onPanEnd: () => {},
-
-  postUpdate () {
-    this.panX = 0
-    this.panY = 0
-  }
+  onPanStart: noop,
+  onPanUpdate: noop,
+  onPanEnd: noop
 }
 
 function updateMousePos (e) {
@@ -23,11 +20,6 @@ function updateMousePos (e) {
 }
 
 let touched = false
-
-function onMouseMove (e) {
-  Input.usingMouse = true
-  updateMousePos(e)
-}
 
 document.body.addEventListener('mousedown', e => {
   if (!Input.usingMouse) {
@@ -51,14 +43,21 @@ document.body.addEventListener('mouseup', e => {
   }
 })
 
+document.addEventListener('gesturestart', e => {
+  e.preventDefault()
+})
+
 let touchStartPositions = {}
 
-document.addEventListener('touchstart', e => {
+function onMouseMove (e) {
+  Input.usingMouse = true
+  updateMousePos(e)
+}
+
+function onTouchStart(e) {
   if (Input.usingMouse) {
     return
   }
-
-  e.preventDefault()
 
   if (!touched) {
     document.body.removeEventListener('mousemove', onMouseMove)
@@ -74,15 +73,9 @@ document.addEventListener('touchstart', e => {
     updateMousePos(e.changedTouches[0])
     Input.pointerDown = true
   }
-})
+}
 
-document.addEventListener('gesturestart', e => {
-  e.preventDefault()
-})
-
-document.addEventListener('touchmove', e => {
-  e.preventDefault()
-
+function onTouchMove (e) {
   updateMousePos(e.touches[0])
 
   const touchPositions = {}
@@ -91,9 +84,9 @@ document.addEventListener('touchmove', e => {
   }
 
   Input.onPanUpdate(touchPositions)
-})
+}
 
-function handleTouchEnd (e) {
+function onTouchEnd (e) {
   for (const touch of e.changedTouches) {
     delete touchStartPositions[touch.identifier]
   }
@@ -102,14 +95,15 @@ function handleTouchEnd (e) {
     return
   }
 
-  if (e.touches.length === 1) {
-    Input.onPanEnd()
-  } else if (e.touches.length === 0) {
+  if (e.touches.length <= 1) {
     Input.pointerDown = false
+    Input.onPanEnd()
   }
 }
 
-document.addEventListener('touchend', handleTouchEnd)
-document.addEventListener('touchcancel', handleTouchEnd)
-
 document.body.addEventListener('mousemove', onMouseMove)
+
+document.addEventListener('touchstart', onTouchStart)
+document.addEventListener('touchmove', onTouchMove)
+document.addEventListener('touchend', onTouchEnd)
+document.addEventListener('touchcancel', onTouchEnd)
