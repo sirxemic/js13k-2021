@@ -5,6 +5,7 @@ let index = 0
 const queue = []
 
 export function debug (...stuff) {
+// <dev-only>
   if (!element) {
     element = document.createElement('div')
     element.style.position = 'fixed'
@@ -23,4 +24,5 @@ export function debug (...stuff) {
   }
 
   element.textContent = queue.join('\n')
+// </dev-only>
 }

@@ -6,11 +6,7 @@ import { currentPuzzle, delta } from './globals.js'
 import { Vector3 } from './Math/Vector3.js'
 import { clamp } from './utils.js'
 
-export const GAME_MODE = 0
-export const END_MODE = 1
-
-export
-class Camera {
+export class Camera {
   constructor () {
     this.matrix = new Matrix4()
     this.projectionMatrix = new Matrix4()
@@ -20,13 +16,10 @@ class Camera {
     this.y = 0
     this.zoom = 1000
 
-    this.mode = GAME_MODE
-
     document.addEventListener('wheel', this.onWheel.bind(this))
   }
 
   reset () {
-    this.mode = GAME_MODE
     this.x = currentPuzzle.width - 1
     this.y = currentPuzzle.height - 1
 
@@ -42,14 +35,13 @@ class Camera {
   }
 
   get lookFrom () {
-    return new Vector3(this.x, this.y - (0.25 + (this.zoom < 1 ? 1 - this.zoom : 0)) * this.zoom, this.zoom)
+    return new Vector3(this.x, this.y - 0.1 * this.zoom, this.zoom)
   }
 
   updateMatrix () {
-    if (this.mode === GAME_MODE) {
-      this.zoom = clamp(this.zoom, 16, this.maxZoom)
-    }
-    const up = new Vector3(0, 0, 1)
+    this.zoom = clamp(this.zoom, 16, this.maxZoom)
+
+    const up = new Vector3(0, 1, 0)
     this.matrix.setTranslation(this.lookFrom)
     this.matrix.lookAt(this.lookFrom, this.lookAt, up)
   }
@@ -59,26 +51,19 @@ class Camera {
   }
 
   step () {
-    if (this.mode === GAME_MODE) {
-      if (Input.usingMouse) {
-        const margin = Math.min(TheCanvas.width, TheCanvas.height) * 0.2
-        const scale = 15 / margin
+    if (Input.usingMouse) {
+      const margin = 25
+      const scale = delta
 
-        if (Input.mouseX < margin) this.x -= delta * Math.min(15, (margin - Input.mouseX) * scale)
-        if (Input.mouseY < margin) this.y += delta * Math.min(15, (margin - Input.mouseY) * scale)
-        if (Input.mouseX > TheCanvas.width - margin) this.x += delta * Math.min(15, (Input.mouseX - TheCanvas.width + margin) * scale)
-        if (Input.mouseY > TheCanvas.height - margin) this.y -= delta * Math.min(15, (Input.mouseY - TheCanvas.height + margin) * scale)
-      }
+      if (Input.mouseX < margin) this.x -= (margin - Input.mouseX) * scale
+      if (Input.mouseY < margin) this.y += (margin - Input.mouseY) * scale
+      if (Input.mouseX > TheCanvas.width - margin) this.x += (Input.mouseX - TheCanvas.width + margin) * scale
+      if (Input.mouseY > TheCanvas.height - margin) this.y -= (Input.mouseY - TheCanvas.height + margin) * scale
+    }
 
-      if (!currentPuzzle.wrapping) {
-        this.x = clamp(this.x, 0, (currentPuzzle.width - 1) * 2)
-        this.y = clamp(this.y, 0, (currentPuzzle.height - 1) * 2)
-      }
-    } else {
-      const factor = 1 - Math.exp(-0.1 * delta)
-      this.x += (currentPuzzle.width - 1 - this.x) * factor
-      this.y += (currentPuzzle.height - 1 - this.y) * factor
-      this.zoom -= this.zoom * factor
+    if (!currentPuzzle.wrapping) {
+      this.x = clamp(this.x, 0, (currentPuzzle.width - 1) * 2)
+      this.y = clamp(this.y, 0, (currentPuzzle.height - 1) * 2)
     }
 
     this.updateMatrix()

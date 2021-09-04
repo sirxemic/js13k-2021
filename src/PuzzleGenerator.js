@@ -2,6 +2,14 @@ import { Vector2 } from './Math/Vector2.js'
 import { Puzzle } from './Puzzle.js'
 import { pickRandomFromArray } from './utils.js'
 
+// <dev-only>
+// let s = 123456
+// Math.random = () => {
+//   s = s * 16807 % 2147483647
+//   return (s - 1) / 2147483646
+// }
+// </dev-only>
+
 /**
  * The grid consists of cells with simple coordinates:
  *
@@ -139,6 +147,16 @@ class PuzzleGeneratorPass {
 
     const galaxiesToRemove = []
 
+    const processCells = (center, cells) => {
+      if (cells.length <= 1) return
+
+      this.galaxies.push({ center, cells })
+      cells.forEach(cell => {
+        galaxiesToRemove.push(cell.id)
+        cell.isSingleton = false
+      })
+    }
+
     // First see if there are clusters of 4 singletons
     const maxX = this.wrapping ? this.width : this.width - 1
     const maxY = this.wrapping ? this.height : this.height - 1
@@ -152,11 +170,7 @@ class PuzzleGeneratorPass {
           this.getCellAt({ x: x + 1, y: y + 1 })
         ]
         if (cells.every(cell => cell.isSingleton)) {
-          this.galaxies.push({ center, cells })
-          cells.forEach(cell => {
-            galaxiesToRemove.push(cell.id)
-            cell.isSingleton = false
-          })
+          processCells(center, cells)
         }
       }
     }
@@ -168,7 +182,9 @@ class PuzzleGeneratorPass {
         if (!cells[0].isSingleton) {
           continue
         }
-        for (let x2 = x + 1; x2 < maxX; x2++) {
+
+        const maxX2 = this.wrapping ? x + this.width : this.width
+        for (let x2 = x + 1; x2 < maxX2; x2++) {
           const cell = this.getCellAt({ x: x2, y })
           if (cell.isSingleton) {
             cells.push(cell)
@@ -177,14 +193,9 @@ class PuzzleGeneratorPass {
           }
         }
 
-        if (cells.length > 1) {
-          const center = new Vector2(x + cells.length / 2, y + 0.5)
-          this.galaxies.push({ center, cells })
-          cells.forEach(cell => {
-            galaxiesToRemove.push(cell.id)
-            cell.isSingleton = false
-          })
-        }
+
+        const center = new Vector2(x + cells.length / 2, y + 0.5)
+        processCells(center, cells)
       }
     }
 
@@ -195,7 +206,9 @@ class PuzzleGeneratorPass {
         if (!cells[0].isSingleton) {
           continue
         }
-        for (let y2 = y + 1; y2 < maxY; y2++) {
+
+        const maxY2 = this.wrapping ? y + this.height : this.height
+        for (let y2 = y + 1; y2 < maxY2; y2++) {
           const cell = this.getCellAt({ x, y: y2 })
           if (cell.isSingleton) {
             cells.push(cell)
@@ -204,14 +217,8 @@ class PuzzleGeneratorPass {
           }
         }
 
-        if (cells.length > 1) {
-          const center = new Vector2(x + 0.5, y + cells.length / 2)
-          this.galaxies.push({ center, cells })
-          cells.forEach(cell => {
-            galaxiesToRemove.push(cell.id)
-            cell.isSingleton = false
-          })
-        }
+        const center = new Vector2(x + 0.5, y + cells.length / 2)
+        processCells(center, cells)
       }
     }
 

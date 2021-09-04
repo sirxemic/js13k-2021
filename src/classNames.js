@@ -9,5 +9,7 @@ export const classNames = {
   undo: 'h',
   openMenu: 'i',
   new: 'j',
-  ui: 'k'
+  ui: 'k',
+  hidden: 'l',
+  modal: 'm'
 }

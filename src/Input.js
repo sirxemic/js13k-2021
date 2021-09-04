@@ -1,3 +1,4 @@
+import { TheCanvas } from './Graphics.js'
 import { noop } from './utils.js'
 
 export let Input = {
@@ -19,9 +20,7 @@ function updateMousePos (e) {
   Input.mouseY = e.pageY
 }
 
-let touched = false
-
-document.body.addEventListener('mousedown', e => {
+TheCanvas.addEventListener('mousedown', e => {
   if (!Input.usingMouse) {
     return
   }
@@ -55,13 +54,9 @@ function onMouseMove (e) {
 }
 
 function onTouchStart(e) {
-  if (Input.usingMouse) {
-    return
-  }
+  document.body.removeEventListener('mousemove', onMouseMove)
 
-  if (!touched) {
-    document.body.removeEventListener('mousemove', onMouseMove)
-  }
+  Input.usingMouse = false
 
   for (const touch of e.changedTouches) {
     touchStartPositions[touch.identifier] = touch
@@ -91,10 +86,6 @@ function onTouchEnd (e) {
     delete touchStartPositions[touch.identifier]
   }
 
-  if (Input.usingMouse) {
-    return
-  }
-
   if (e.touches.length <= 1) {
     Input.pointerDown = false
     Input.onPanEnd()
@@ -103,7 +94,7 @@ function onTouchEnd (e) {
 
 document.body.addEventListener('mousemove', onMouseMove)
 
-document.addEventListener('touchstart', onTouchStart)
-document.addEventListener('touchmove', onTouchMove)
-document.addEventListener('touchend', onTouchEnd)
-document.addEventListener('touchcancel', onTouchEnd)
+TheCanvas.addEventListener('touchstart', onTouchStart)
+TheCanvas.addEventListener('touchmove', onTouchMove)
+TheCanvas.addEventListener('touchend', onTouchEnd)
+TheCanvas.addEventListener('touchcancel', onTouchEnd)

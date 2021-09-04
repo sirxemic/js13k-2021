@@ -1,5 +1,4 @@
 import { classNames } from './classNames.js'
-import { currentPuzzle } from './globals.js'
 
 // <dev-only>
 for (let key in classNames) {
@@ -11,12 +10,17 @@ function getElement (name) {
   return document.querySelector('.' + name)
 }
 
-export function updateUI () {
-  // TODO
+function toggleVisibility (element, show) {
+  element.classList.toggle(classNames.hidden, !show)
 }
+
+/**
+ * UI event handlers
+ */
 
 let onIntroDismiss
 let onDifficultySelect
+let onUndo
 let onNewGame
 
 export function bindIntroDismiss (callback) {
@@ -27,37 +31,61 @@ export function bindDifficultySelect (callback) {
   onDifficultySelect = callback
 }
 
+export function bindUndo (callback) {
+  onUndo = callback
+}
+
 export function bindNewGame (callback) {
   onNewGame = callback
 }
 
-const introModal = getElement(classNames.intro)
-const difficultyModal = getElement(classNames.menu)
-const difficultyButton = getElement(classNames.openMenu)
-const newGameButton = getElement(classNames.new)
+/**
+ * UI controllers
+ *
+ */
 
-introModal.onclick = () => {
-  introModal.style.display = 'none'
-  onIntroDismiss()
-}
-
-difficultyButton.onclick = () => {
-  difficultyModal.style.display = 'flex'
-}
-
-newGameButton.onclick = () => {
-  onNewGame()
+export function toggleUndo (show) {
+  toggleVisibility(undoButton, show)
 }
 
 export function updateDifficultyButton (settings) {
   difficultyButton.textContent = `${settings.width}x${settings.height}${settings.wrapping ? ' with wrapping' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
 }
 
+const introModal = getElement(classNames.intro)
+const difficultyModal = getElement(classNames.menu)
+const difficultyButton = getElement(classNames.openMenu)
+const newGameButton = getElement(classNames.new)
+const undoButton = getElement(classNames.undo)
+
+introModal.onclick = () => {
+  toggleVisibility(introModal, false)
+  onIntroDismiss()
+}
+
+difficultyButton.onclick = () => {
+  toggleVisibility(difficultyModal, true)
+}
+
+newGameButton.onclick = () => {
+  onNewGame()
+}
+
+undoButton.onclick = () => {
+  onUndo()
+}
+
+document.addEventListener('keypress', e => {
+  if (e.key === 'z') {
+    onUndo()
+  }
+})
+
 difficultyModal.onclick = (e) => {
   if (e.target === difficultyModal) {
-    difficultyModal.style.display = 'none'
+    toggleVisibility(difficultyModal, false)
   } else if (e.target.dataset['diff']) {
-    difficultyModal.style.display = 'none'
+    toggleVisibility(difficultyModal, false)
     const data = JSON.parse(e.target.dataset['diff'])
     difficultyButton.textContent = `${data[0]}x${data[1]}${data[3] ? ' with wrapping' : ''} - ${data[2] ? 'Hard' : 'Easy'}`
     onDifficultySelect({

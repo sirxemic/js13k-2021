@@ -47,6 +47,8 @@ export class Selector {
     let lastCursorPos = null
     let preventAccidentalDraw = false
 
+    this.undoStack = []
+
     const fsm = this.fsm = new FSM({
       [DEFAULT_STATE]: {
         enter: () => {
@@ -76,6 +78,8 @@ export class Selector {
 
       [DRAG_OR_DRAW_STATE]: {
         enter: () => {
+          this.addStateToUndoStack()
+
           lastCursorPos = this.getTilePosAtPointer()
           this.selectedId = this.getIdAtPointer()
           this.addCursorAt(lastCursorPos)
@@ -115,6 +119,7 @@ export class Selector {
       [ERASING_STATE]: {
         enter: () => {
           const currentCursorPos = this.getTilePosAtPointer()
+
           currentPuzzle.unsetSymmetricallyAt(lastCursorPos)
           currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
 
@@ -217,6 +222,31 @@ export class Selector {
   clearCursors () {
     this.validCursors = {}
     this.invalidCursors = {}
+  }
+
+  addStateToUndoStack () {
+    const currentState = currentPuzzle.tiles.map(tile => tile.id)
+    const previousState = this.undoStack[this.undoStack.length - 1]
+    if (currentState.toString() === previousState?.toString()) {
+      return
+    }
+    this.undoStack.push(currentPuzzle.tiles.map(tile => tile.id))
+  }
+
+  canUndo () {
+    return this.undoStack.length > 0
+  }
+
+  undo () {
+    const state = this.undoStack.pop()
+    if (!state) {
+      return
+    }
+
+    for (let i = 0; i < state.length; i++) {
+      currentPuzzle.tiles[i].id = state[i]
+    }
+    currentPuzzle.updateConnections()
   }
 
   getTilePosAtPointer () {

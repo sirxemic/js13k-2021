@@ -1,7 +1,7 @@
-import { END_MODE, TheCamera } from './Camera.js'
+import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
-import { bindDifficultySelect, bindIntroDismiss, bindNewGame, updateDifficultyButton, updateUI } from './UI.js'
+import { bindDifficultySelect, bindIntroDismiss, bindNewGame, bindUndo, toggleUndo, updateDifficultyButton } from './UI.js'
 import { clamp } from './utils.js'
 import { loadAssets } from './Assets.js'
 import { loadProgress } from './Progress.js'
@@ -51,8 +51,6 @@ let puzzleSettings = {
   wrapping: false
 }
 
-updateDifficultyButton(puzzleSettings)
-
 const mainFSM = new FSM({
   [INTRO]: {
     enter () {
@@ -67,13 +65,18 @@ const mainFSM = new FSM({
 
       bindDifficultySelect((settings) => {
         puzzleSettings = settings
-        updateDifficultyButton(puzzleSettings)
 
         mainFSM.setState(PUZZLE_FADE_OUT)
       })
 
       bindNewGame(() => {
         mainFSM.setState(PUZZLE_FADE_OUT)
+      })
+
+      bindUndo(() => {
+        if (selector) {
+          selector.undo()
+        }
       })
     }
   },
@@ -83,6 +86,7 @@ const mainFSM = new FSM({
       const puzzle = new PuzzleGenerator(puzzleSettings).generate()
       setCurrentPuzzle(puzzle)
       renderer = new PuzzleRenderer()
+      toggleUndo(false)
       TheCamera.reset()
     },
 
@@ -107,7 +111,6 @@ const mainFSM = new FSM({
 
   [PUZZLE_SOLVED]: {
     enter () {
-      TheCamera.mode = END_MODE
       selector = null
     }
   },
@@ -128,6 +131,9 @@ const mainFSM = new FSM({
   }
 }, INTRO)
 
+/**
+ * Game loop stuff
+ */
 function step () {
   mainFSM.updateFSM()
 
@@ -164,7 +170,8 @@ function tick (time) {
     step()
     render()
 
-    updateUI()
+    toggleUndo(selector?.canUndo())
+    updateDifficultyButton(puzzleSettings)
   }
 
   requestAnimationFrame(tick)

@@ -17,28 +17,47 @@
     overflow: hidden;
     font-family: sans-serif;
     font-weight: bold;
+    font-size: 3vmin;
     color: #fff;
     text-shadow: 0 0 0.1em #000;
   }
-  canvas {
-    pointer-events: none;
+
+  .button {
+    min-width: 6em;
+    text-align: center;
+    border: 1px solid;
+    padding: 0.5em 1em;
+    border-radius: 0.25em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
   }
+
   .openMenu, .undo, .new {
     position: fixed;
     z-index: 1;
   }
   .openMenu {
-    top: 1em;
-    left: 1em;
+    top: max(25px, 1em);
+    left: max(25px, 1em);
   }
   .undo {
-    top: 1em;
-    right: 1em;
+    top: max(25px, 1em);
+    right: max(25px, 1em);
   }
   .new {
-    bottom: 1em;
+    bottom: max(25px, 1em);
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .wrapper, .ui .button {
+    background: rgba(5, 0, 13, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  .button:hover {
+    background: rgba(25, 0, 25, 0.7);
   }
 
   .modal {
@@ -49,17 +68,13 @@
     justify-content: center;
     flex-direction: column;
     z-index: 100;
-    font-size: 3vmin;
   }
 
   .wrapper {
     max-width: 600px;
-    background: rgba(5, 0, 13, 0.7);
     padding: 2em;
-    box-shadow: 0 0 2vmin #000;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
     border-radius: 0.5vmin;
+    box-shadow: 0 0 2vmin #000;
   }
 
   h1 {
@@ -67,18 +82,12 @@
     margin-top: 0;
   }
 
-  .button {
-    font-size: 3vmin;
-    min-width: 6em;
-    text-align: center;
-    border: 1px solid;
-    padding: 0.5em 1em;
-    border-radius: 0.25em;
-    cursor: pointer;
-  }
-
   .modal .button + .button {
     margin-top: 0.5em;
+  }
+
+  .hidden {
+    display: none !important;
   }
 </style>
 <style>
@@ -94,11 +103,11 @@
       <h2>Instructions:</h2>
       <p>Fill the empty spaces with galaxies. This can be harder than it sounds, as the galaxies will always keep their rotational symmetry.</p>
       <p>To expand a galaxy, just drag one of its tiles onto something else. Dragging it onto another tile of the same galaxy will remove the tiles.</p>
-      <div class="button dismiss">Click anywhere to continue</div>
+      <p style="text-align: center;margin-bottom:0">Click anywhere to continue</p>
     </div>
   </div>
 
-  <div class="modal menu" style="display:none">
+  <div class="modal menu hidden">
     <div class="wrapper">
       <h1>Choose difficulty</h1>
       <div class="button" data-diff="[5,5,0,0]">5x5 - Easy</div>
@@ -111,7 +120,7 @@
   </div>
 
   <div class="ui">
-    <div class="undo button">Undo</div>
+    <div class="undo button hidden">Undo</div>
     <div class="openMenu button"></div>
     <div class="new button">New game</div>
   </div>
