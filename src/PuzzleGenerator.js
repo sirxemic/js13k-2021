@@ -193,7 +193,6 @@ class PuzzleGeneratorPass {
           }
         }
 
-
         const center = new Vector2(x + cells.length / 2, y + 0.5)
         processCells(center, cells)
       }
@@ -321,7 +320,7 @@ export class PuzzleGenerator {
       pass = new PuzzleGeneratorPass(this.width, this.height, this.wrapping)
       pass.generate()
     } while (!this.matchesDifficulty(pass))
-    return new Puzzle(this.width, this.height, pass.galaxies.map(galaxy => galaxy.center), this.wrapping)
+    return new Puzzle(this.width, this.height, pass.galaxies, this.wrapping)
   }
 
   matchesDifficulty ({ galaxies, grid }) {
@@ -332,7 +331,7 @@ export class PuzzleGenerator {
       }
     }
     const minimum = this.difficulty === 0 ? 3 : 5
-    const maximum = this.difficulty === 0 ? (this.width + this.height) / 2 - 1 : Math.min(this.width, this.height) * 1.5
+    const maximum = (this.width + this.height) / 2 - 1
     if (expandableGalaxyCount < minimum || expandableGalaxyCount > maximum) {
       return false
     }

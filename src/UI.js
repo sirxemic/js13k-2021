@@ -18,8 +18,12 @@ const introModal = getElement(classNames.intro)
 const difficultyModal = getElement(classNames.menu)
 const difficultyButton = getElement(classNames.openMenu)
 const newGameButton = getElement(classNames.new)
+const restartGameButton = getElement(classNames.restart)
+const solveGameButton = getElement(classNames.solve)
 const undoButton = getElement(classNames.undo)
 const loadingScreen = getElement(classNames.loading)
+const bottomButtons = getElement(classNames.bottomButtons)
+const congratulations = getElement(classNames.congratulations)
 
 /**
  * UI event handlers
@@ -28,6 +32,8 @@ let onIntroDismiss
 let onDifficultySelect
 let onUndo
 let onNewGame
+let onSolve
+let onRestart
 
 export function bindIntroDismiss (callback) {
   onIntroDismiss = callback
@@ -45,11 +51,40 @@ export function bindNewGame (callback) {
   onNewGame = callback
 }
 
+export function bindSolve (callback) {
+  onSolve = callback
+}
+
+export function bindRestart (callback) {
+  onRestart = callback
+}
+
 /**
- * UI controllers
+ * UI controlling functions
  */
 export function toggleUndo (show) {
   toggleVisibility(undoButton, show)
+}
+
+export function showButtons () {
+  toggleVisibility(bottomButtons, true)
+}
+
+export function hideButtons () {
+  toggleUndo(false)
+  toggleVisibility(bottomButtons, false)
+}
+
+export function showCongratulations () {
+  toggleVisibility(congratulations, true)
+
+  setTimeout(() => {
+    hideCongratulations()
+  }, 5000)
+}
+
+export function hideCongratulations () {
+  toggleVisibility(congratulations, false)
 }
 
 export function updateDifficultyButton (settings) {
@@ -74,6 +109,14 @@ export function start () {
 
   undoButton.onclick = () => {
     onUndo()
+  }
+
+  restartGameButton.onclick = () => {
+    onRestart()
+  }
+
+  solveGameButton.onclick = () => {
+    onSolve()
   }
 
   document.addEventListener('keypress', e => {

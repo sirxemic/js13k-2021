@@ -49,12 +49,14 @@ export class Camera {
   }
 
   onWheel (e) {
-    this.zoom *= Math.pow(2, Math.sign(e.deltaY) * 0.04)
+    if (currentPuzzle.wrapping) {
+      this.zoom *= Math.pow(2, Math.sign(e.deltaY) * 0.04)
+    }
   }
 
   step () {
-    if (Input.usingMouse) {
-      const margin = 30
+    if (Input.usingMouse && currentPuzzle.wrapping) {
+      const margin = Math.min(TheCanvas.width, TheCanvas.height) * 0.1
       const acc = this.zoom * delta
 
       if (Input.mouseX < margin) this.deltaX -= acc

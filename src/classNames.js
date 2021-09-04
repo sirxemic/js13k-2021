@@ -12,5 +12,9 @@ export const classNames = {
   ui: 'k',
   _hidden: 'l',
   modal: 'm',
-  loading: 'n'
+  loading: 'n',
+  restart: 'o',
+  solve: 'p',
+  bottomButtons: 'q',
+  congratulations: 'r'
 }

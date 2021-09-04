@@ -1,5 +1,7 @@
 export let TheAudioContext = new window.AudioContext({ sampleRate: 22050 }) // Set explicit lower samplerate to speed up sound generation
-export let TheAudioDestination = TheAudioContext.destination
+export let TheAudioDestination = TheAudioContext.createDynamicsCompressor()
+
+TheAudioDestination.connect(TheAudioContext.destination)
 
 export let TheReverbDestination
 

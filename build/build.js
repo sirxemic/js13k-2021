@@ -62,7 +62,7 @@ export async function build({ fixBeforeMinify, fixAfterHtmlMinify }) {
   minifiedHtml = minifyHtml(minifiedHtml)
   minifiedHtml = fixAfterHtmlMinify(minifiedHtml)
 
-  let newScriptTag = `<script>${code}</script>`
+  let newScriptTag = `<script>${code.replace("'use strict';", '')}</script>`
   minifiedHtml = minifiedHtml
     .replace(/<script[^>]+><\/script>/, _ => newScriptTag)
 

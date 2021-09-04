@@ -4,10 +4,17 @@ export const INVALID_POS = -2
 export const EMPTY = -1
 
 export class Puzzle {
-  constructor (width, height, centers, wrapping) {
+  constructor (width, height, galaxies, wrapping) {
+    this.solution = galaxies.map(galaxy => {
+      return {
+        center: galaxy.center,
+        cells: [...galaxy.cells]
+      }
+    })
+
     this.width = width
     this.height = height
-    this.centers = centers
+    this.centers = galaxies.map(galaxy => galaxy.center)
     this.wrapping = wrapping
 
     this.gridOffset = {
@@ -21,17 +28,31 @@ export class Puzzle {
 
     this.setCenterTiles()
 
+    this.reset()
+  }
+
+  reset () {
     this.tiles = Array.from(
-      { length: width * height },
+      { length: this.width * this.height },
       (_, index) => {
-        const x = index % width
-        const y = Math.floor(index / width)
+        const x = index % this.width
+        const y = Math.floor(index / this.width)
         return { x, y, id: EMPTY }
       }
     )
 
     this.centerTiles.forEach(tile => {
-      this.tiles[tile.x + tile.y * width] = tile
+      this.tiles[tile.x + tile.y * this.width] = tile
+    })
+
+    this.updateConnections()
+  }
+
+  solve () {
+    this.solution.forEach((galaxy, index) => {
+      for (const cell of galaxy.cells) {
+        this.tiles[cell.x + cell.y * this.width].id = index
+      }
     })
 
     this.updateConnections()
@@ -48,15 +69,21 @@ export class Puzzle {
   }
 
   setSymmetricallyAt (pos, id) {
+    const currentId = this.getIdAt(pos)
+
+    if (currentId === id) {
+      return false
+    }
+
     const opposite = this.getOpposite(pos, id)
 
     // When not wrapping, the opposite can be outside of the board
     if (this.getIdAt(opposite) === INVALID_POS) {
-      return
+      return false
     }
 
     if (this.isCenter(pos) || this.isCenter(opposite)) {
-      return
+      return false
     }
 
     // TODO: check if this even is intuitive
@@ -81,26 +108,27 @@ export class Puzzle {
     this.setAt(opposite, id)
 
     this.updateConnections()
+
+    return true
   }
 
   unsetSymmetricallyAt (pos) {
     const id = this.getIdAt(pos)
-    if (id < 0) {
-      return
+    if (id < 0 || !this.canUnsetAt(pos)) {
+      return false
     }
 
+    this.setAt(pos, EMPTY)
 
-    if (this.canUnsetAt(pos)) {
-      this.setAt(pos, EMPTY)
+    const opposite = this.getOpposite(pos, id)
 
-      const opposite = this.getOpposite(pos, id)
-
-      if (this.canUnsetAt(opposite)) {
-        this.setAt(opposite, EMPTY)
-      }
-
-      this.updateConnections()
+    if (this.canUnsetAt(opposite)) {
+      this.setAt(opposite, EMPTY)
     }
+
+    this.updateConnections()
+
+    return true
   }
 
   getTileAt ({ x, y }) {

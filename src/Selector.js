@@ -1,4 +1,4 @@
-import { ErrorSound, PlaceSound } from './Assets.js'
+import { ErrorSound, MainSong, PlaceSound, VictorySong } from './Assets.js'
 import { playSample } from './Audio.js'
 import { TheCamera } from './Camera.js'
 import { FSM } from './FSM.js'
@@ -9,6 +9,7 @@ import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
 import { Matrix4 } from './Math/Matrix4.js'
 import { SelectorShader } from './Shaders/SelectorShader.js'
+import { showCongratulations, toggleUndo } from './UI.js'
 import { clamp, closestModulo, noop } from './utils.js'
 
 export class Cursor {
@@ -49,6 +50,7 @@ export class Selector {
     let lastCursorPos = null
     let preventAccidentalDraw = false
 
+    this.hasBeenSolved = false
     this.undoStack = []
 
     this.createdErrorCursor = false
@@ -125,11 +127,8 @@ export class Selector {
         enter: () => {
           const currentCursorPos = this.getTilePosAtPointer()
 
-          currentPuzzle.unsetSymmetricallyAt(lastCursorPos)
-          currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
-
-          this.addCursorWithSoundAt(lastCursorPos, -1)
-          this.addCursorAt(currentCursorPos, -1)
+          this.eraseAt(lastCursorPos)
+          this.eraseAt(currentCursorPos)
 
           lastCursorPos = currentCursorPos
         },
@@ -146,8 +145,7 @@ export class Selector {
             (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y) &&
             (idAtCursor === this.selectedId || idAtCursor === -1 || this.selectedId === -1)
           ) {
-            currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
-            this.addCursorWithSoundAt(currentCursorPos, -1)
+            this.eraseAt(currentCursorPos)
             lastCursorPos = currentCursorPos
           }
         },
@@ -160,9 +158,7 @@ export class Selector {
       [DRAWING_STATE]: {
         enter: () => {
           const currentPos = this.getTilePosAtPointer()
-          currentPuzzle.setSymmetricallyAt(currentPos, this.selectedId)
-          this.addCursorWithSoundAt(currentPos)
-          this.createCursorsAtOppositeOf(currentPos)
+          this.drawAt(currentPos)
         },
 
         execute: () => {
@@ -179,9 +175,7 @@ export class Selector {
           }
 
           if (!preventAccidentalDraw && (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y)) {
-            currentPuzzle.setSymmetricallyAt(currentCursorPos, this.selectedId)
-            this.addCursorWithSoundAt(currentCursorPos)
-            this.createCursorsAtOppositeOf(currentCursorPos)
+            this.drawAt(currentCursorPos)
             lastCursorPos = currentCursorPos
 
             if (idAtCursor !== this.selectedId) {
@@ -232,22 +226,64 @@ export class Selector {
     }
   }
 
+  handleStateChange (beforeState, afterState) {
+    if (beforeState.toString() !== afterState.toString()) {
+      this.undoStack.push(beforeState)
+    }
+  }
+
+  resetPuzzle () {
+    const stateBefore = this.getState()
+    currentPuzzle.reset()
+    const stateAfter = this.getState()
+
+    this.handleStateChange(stateBefore, stateAfter)
+  }
+
+  solvePuzzle () {
+    this.hasBeenSolved = true
+
+    const stateBefore = this.getState()
+    currentPuzzle.solve()
+    const stateAfter = this.getState()
+
+    this.handleStateChange(stateBefore, stateAfter)
+  }
+
   clearCursors () {
     this.validCursors = {}
     this.invalidCursors = {}
+  }
+
+  handleDrawFinish () {
+    this.handleStateChange(this.stateBeforeDraw, this.getState())
   }
 
   getState () {
     return currentPuzzle.tiles.map(tile => tile.id)
   }
 
-  handleDrawFinish () {
-    const stateBeforeDraw = this.stateBeforeDraw
-    const stateAfterDraw = this.getState()
-    if (stateAfterDraw.toString() === stateBeforeDraw.toString()) {
-      return
+  drawAt (pos) {
+    const updated = currentPuzzle.setSymmetricallyAt(pos, this.selectedId)
+    const addedCursor = this.addCursorAt(pos)
+    this.createCursorsAtOppositeOf(pos)
+
+    if (updated) {
+      this.soundToPlay = PlaceSound
+    } else if (addedCursor && currentPuzzle.getIdAt(pos) !== this.selectedId) {
+      this.soundToPlay = ErrorSound
     }
-    this.undoStack.push(this.stateBeforeDraw)
+  }
+
+  eraseAt (pos) {
+    const updated = currentPuzzle.unsetSymmetricallyAt(pos)
+    const addedCursor = this.addCursorAt(pos, -1)
+
+    if (updated) {
+      this.soundToPlay = PlaceSound
+    } else if (addedCursor && currentPuzzle.getIdAt(pos) !== -1) {
+      this.soundToPlay = ErrorSound
+    }
   }
 
   canUndo () {
@@ -318,14 +354,14 @@ export class Selector {
 
     const targetCollection = id === expected ? this.validCursors : this.invalidCursors
 
-    targetCollection[`${pos.x},${pos.y}`] = new Cursor(pos)
+    const key = `${pos.x},${pos.y}`
+    if (targetCollection[key]) {
+      return false
+    }
 
-    return id === expected
-  }
+    targetCollection[key] = new Cursor(pos)
 
-  addCursorWithSoundAt (pos, expected = this.selectedId) {
-    const result = this.addCursorAt(pos, expected)
-    this.soundToPlay = result ? PlaceSound : ErrorSound
+    return true
   }
 
   getIdAtPointer () {
@@ -339,6 +375,16 @@ export class Selector {
     if (this.soundToPlay) {
       playSample(this.soundToPlay)
       this.soundToPlay = null
+    }
+
+    toggleUndo(this.canUndo())
+
+    if (!this.hasBeenSolved && currentPuzzle.isSolved()) {
+      this.hasBeenSolved = true
+      VictorySong.play()
+      MainSong.duckForABit()
+      showCongratulations()
+      console.log('show')
     }
   }
 

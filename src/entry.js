@@ -1,9 +1,9 @@
 import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
-import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
-import { bindDifficultySelect, bindIntroDismiss, bindNewGame, bindUndo, start, toggleUndo, updateDifficultyButton } from './UI.js'
+import { delta, setCurrentPuzzle, setDelta } from './globals.js'
+import { bindDifficultySelect, bindIntroDismiss, bindNewGame, bindRestart, bindSolve, bindUndo, hideButtons, hideCongratulations, showButtons, start, toggleUndo, updateDifficultyButton } from './UI.js'
 import { clamp } from './utils.js'
-import { loadAssets, MainSong, VictorySong } from './Assets.js'
+import { loadAssets, MainSong } from './Assets.js'
 import { loadProgress } from './Progress.js'
 import { PuzzleRenderer } from './PuzzleRenderer.js'
 import { Grid } from './Grid.js'
@@ -35,6 +35,7 @@ const fg2 = new StarsLayer(8)
 let renderer
 let selector
 let transitionTime
+let solveAnimation
 
 /**
  * The main state machine
@@ -51,6 +52,8 @@ let puzzleSettings = {
   difficulty: 0,
   wrapping: false
 }
+
+let wasSolved
 
 const mainFSM = new FSM({
   [INTRO]: {
@@ -85,6 +88,12 @@ const mainFSM = new FSM({
         }
       })
 
+      bindSolve(() => {
+        if (selector) {
+          selector.solvePuzzle()
+        }
+      })
+
       start()
     }
   },
@@ -108,20 +117,15 @@ const mainFSM = new FSM({
   [PUZZLE_STATE]: {
     enter () {
       selector = new Selector()
+      showButtons()
+
+      bindRestart(() => {
+        selector.resetPuzzle()
+      })
     },
 
-    execute () {
-      if (currentPuzzle.isSolved()) {
-        mainFSM.setState(PUZZLE_SOLVED)
-      }
-    }
-  },
-
-  [PUZZLE_SOLVED]: {
-    enter () {
-      VictorySong.play()
-      MainSong.duckForABit()
-      selector = null
+    leave () {
+      hideButtons()
     }
   },
 
@@ -130,6 +134,7 @@ const mainFSM = new FSM({
       transitionTime = 0
       selector = null
       renderer.handleCancel()
+      hideCongratulations()
     },
 
     execute () {
@@ -179,8 +184,6 @@ function tick (time) {
   if (!isNaN(delta)) {
     step()
     render()
-
-    toggleUndo(selector ? selector.canUndo() : false)
     updateDifficultyButton(puzzleSettings)
   }
 
