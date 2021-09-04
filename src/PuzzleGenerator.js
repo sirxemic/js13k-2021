@@ -75,7 +75,8 @@ class PuzzleGeneratorPass {
 
     this.galaxies.push({
       center,
-      cells
+      cells,
+      staticCount: cells.size
     })
 
     // Due to symmetry we don't have to process all cells:
@@ -317,7 +318,17 @@ export class PuzzleGenerator {
   }
 
   matchesDifficulty ({ galaxies, grid }) {
-    // TODO
+    let expandableGalaxyCount = 0
+    for (const galaxy of galaxies) {
+      if (galaxy.staticCount < galaxy.cells.size) {
+        expandableGalaxyCount++
+      }
+    }
+    const minimum = this.difficulty === 0 ? 3 : 5
+    const maximum = this.difficulty === 0 ? (this.width + this.height) / 2 - 1 : Math.min(this.width, this.height) * 1.5
+    if (expandableGalaxyCount < minimum || expandableGalaxyCount > maximum) {
+      return false
+    }
     return true
   }
 }

@@ -34,10 +34,6 @@ export class PuzzleRenderer {
     this.fadeT = 0
   }
 
-  handleSolve () {
-    this.fadeSpeed = -0.5
-  }
-
   handleCancel () {
     this.fadeSpeed = -2
   }

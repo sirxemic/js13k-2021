@@ -7,5 +7,7 @@ export const classNames = {
   dismiss: 'f',
   menu: 'g',
   undo: 'h',
-  openMenu: 'i'
+  openMenu: 'i',
+  new: 'j',
+  ui: 'k'
 }

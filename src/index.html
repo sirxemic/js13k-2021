@@ -23,19 +23,22 @@
   canvas {
     pointer-events: none;
   }
-  .openMenu {
+  .openMenu, .undo, .new {
     position: fixed;
-    font-size: 3vmin;
-    top: 1em;
-    left: 1em;
     z-index: 1;
   }
+  .openMenu {
+    top: 1em;
+    left: 1em;
+  }
   .undo {
-    position: fixed;
-    font-size: 3vmin;
     top: 1em;
     right: 1em;
-    z-index: 1;
+  }
+  .new {
+    bottom: 1em;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .modal {
@@ -65,11 +68,11 @@
   }
 
   .button {
-    margin: 0 auto;
-    width: 8em;
+    font-size: 3vmin;
+    min-width: 6em;
     text-align: center;
     border: 1px solid;
-    padding: 0.5em 0;
+    padding: 0.5em 1em;
     border-radius: 0.25em;
     cursor: pointer;
   }
@@ -90,8 +93,8 @@
       <h1>Galaxies</h1>
       <h2>Instructions:</h2>
       <p>Fill the empty spaces with galaxies. This can be harder than it sounds, as the galaxies will always keep their rotational symmetry.</p>
-      <p>To expand a galaxy, just drag one of its tiles. Dragging a galaxy tile onto itself will remove that tile.</p>
-      <div class="button dismiss">Got it!</div>
+      <p>To expand a galaxy, just drag one of its tiles onto something else. Dragging it onto another tile of the same galaxy will remove the tiles.</p>
+      <div class="button dismiss">Click anywhere to continue</div>
     </div>
   </div>
 
@@ -109,7 +112,8 @@
 
   <div class="ui">
     <div class="undo button">Undo</div>
-    <div class="openMenu button">7x7 Easy</div>
+    <div class="openMenu button"></div>
+    <div class="new button">New game</div>
   </div>
   <script src="build.js"></script>
 </body>

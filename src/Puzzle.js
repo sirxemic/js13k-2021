@@ -16,7 +16,7 @@ export class Puzzle {
     }
 
     this.colorIds = [
-      0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5
+      0, 1, 2, 3, 4, 5
     ]
 
     this.setCenterTiles()
@@ -55,13 +55,8 @@ export class Puzzle {
       return
     }
 
-    for (const center of this.centers) {
-      if (this.touchesCenter(pos, center)) {
-        return
-      }
-      if (this.touchesCenter(opposite, center)) {
-        return
-      }
+    if (this.isCenter(pos) || this.isCenter(opposite)) {
+      return
     }
 
     // TODO: check if this even is intuitive
@@ -151,10 +146,6 @@ export class Puzzle {
 
   setAt (pos, id) {
     const tile = this.getTileAt(pos)
-    if (tile === null) {
-      console.log('hmm wat')
-      return
-    }
     tile.id = id
   }
 
@@ -167,26 +158,16 @@ export class Puzzle {
   }
 
   canUnsetAt (pos) {
-    for (const center of this.centers) {
-      if (this.touchesCenter(pos, center)) {
-        return false
-      }
+    if (this.isCenter(pos)) {
+      return false
     }
 
     return this.getIdAt(pos) !== INVALID_POS
   }
 
-  touchesCenter ({ x, y }, center) {
-    if (x < 0) x %= this.width
-    x = (x + this.width) % this.width
-    if (y < 0) y %= this.height
-    y = (y + this.height) % this.height
-    if (
-      Math.abs((x + 0.5) - center.x) < 1 &&
-      Math.abs((y + 0.5) - center.y) < 1) {
-      return true
-    }
-    return false
+  isCenter (pos) {
+    const tile = this.getTileAt(pos)
+    return this.centerTiles.includes(tile)
   }
 
   isConnectedAt(id, pos) {

@@ -1,7 +1,7 @@
-import { TheCamera } from './Camera.js'
+import { END_MODE, TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
-import { bindDifficultySelect, bindIntroDismiss, updateUI } from './UI.js'
+import { bindDifficultySelect, bindIntroDismiss, bindNewGame, updateDifficultyButton, updateUI } from './UI.js'
 import { clamp } from './utils.js'
 import { loadAssets } from './Assets.js'
 import { loadProgress } from './Progress.js'
@@ -39,10 +39,10 @@ let transitionTime
  * The main state machine
  */
 const INTRO = 1
-const PUZZLE_START_TRANSITION = 2
+const PUZZLE_FADE_IN = 2
 const PUZZLE_STATE = 3
-const PUZZLE_END_TRANSITION = 4
-const PUZZLE_SWITCH_TRANSITION = 5
+const PUZZLE_FADE_OUT = 4
+const PUZZLE_SOLVED = 5
 
 let puzzleSettings = {
   width: 7,
@@ -50,6 +50,8 @@ let puzzleSettings = {
   difficulty: 0,
   wrapping: false
 }
+
+updateDifficultyButton(puzzleSettings)
 
 const mainFSM = new FSM({
   [INTRO]: {
@@ -65,13 +67,18 @@ const mainFSM = new FSM({
 
       bindDifficultySelect((settings) => {
         puzzleSettings = settings
+        updateDifficultyButton(puzzleSettings)
 
-        mainFSM.setState(PUZZLE_SWITCH_TRANSITION)
+        mainFSM.setState(PUZZLE_FADE_OUT)
+      })
+
+      bindNewGame(() => {
+        mainFSM.setState(PUZZLE_FADE_OUT)
       })
     }
   },
 
-  [PUZZLE_START_TRANSITION]: {
+  [PUZZLE_FADE_IN]: {
     enter () {
       const puzzle = new PuzzleGenerator(puzzleSettings).generate()
       setCurrentPuzzle(puzzle)
@@ -93,27 +100,19 @@ const mainFSM = new FSM({
 
     execute () {
       if (currentPuzzle.isSolved()) {
-        mainFSM.setState(PUZZLE_END_TRANSITION)
+        mainFSM.setState(PUZZLE_SOLVED)
       }
     }
   },
 
-  [PUZZLE_END_TRANSITION]: {
+  [PUZZLE_SOLVED]: {
     enter () {
-      transitionTime = 0
+      TheCamera.mode = END_MODE
       selector = null
-      renderer.handleSolve()
-    },
-
-    execute () {
-      transitionTime += delta
-      if (transitionTime >= 2) {
-        mainFSM.setState(PUZZLE_START_TRANSITION)
-      }
     }
   },
 
-  [PUZZLE_SWITCH_TRANSITION]: {
+  [PUZZLE_FADE_OUT]: {
     enter () {
       transitionTime = 0
       selector = null
@@ -123,7 +122,7 @@ const mainFSM = new FSM({
     execute () {
       transitionTime += delta
       if (transitionTime >= 0.5) {
-        mainFSM.setState(PUZZLE_START_TRANSITION)
+        mainFSM.setState(PUZZLE_FADE_IN)
       }
     }
   }
