@@ -34,8 +34,12 @@ export class PuzzleRenderer {
     this.fadeT = 0
   }
 
-  finishUp () {
+  handleSolve () {
     this.fadeSpeed = -0.5
+  }
+
+  handleCancel () {
+    this.fadeSpeed = -2
   }
 
   renderMask () {
@@ -77,17 +81,16 @@ export class PuzzleRenderer {
       0, 0, 1, 0,
       0, 0, 0, 1
     ])
-
     const currentCellPos = TheCamera.getRayGridIntersection(TheCanvas.width / 2, TheCanvas.height / 2)
-    currentCellPos.x = Math.round(currentCellPos.x / (width * 2))
-    currentCellPos.y = Math.round(currentCellPos.y / (height * 2))
 
-    // Don't know why it has to be -5, but it works
-    const offX = (width - 5) / 2
-    const offY = (height - 5) / 2
+    currentCellPos.x = Math.floor((currentCellPos.x + 1) / (width * 2))
+    currentCellPos.y = Math.floor((currentCellPos.y + 1) / (height * 2))
 
-    const marginH = currentPuzzle.wrappging ? 3 : 0
-    const marginV = currentPuzzle.wrappging ? 2 : 0
+    const marginH = currentPuzzle.wrapping ? 3 : 0
+    const marginV = currentPuzzle.wrapping ? 2 : 0
+
+    const offX = (width - 1) / 2
+    const offY = (height - 1) / 2
 
     for (let x = -marginH; x <= marginH; x++) {
       for (let y = -marginV; y <= marginV; y++) {
@@ -111,7 +114,7 @@ export class PuzzleRenderer {
     TileShader.use({
       [U_TILE_POS]: new Vector2(tile.x + 0.5, tile.y + 0.5),
       [U_WORLD_SIZE]: new Vector2(currentPuzzle.width, currentPuzzle.height),
-      [U_COLOR]: currentPuzzle.colorIds[tile.id] / 6,
+      [U_COLOR]: currentPuzzle.colorIds[tile.id % currentPuzzle.colorIds.length] / 6,
       [U_GALAXY_CENTER]: currentPuzzle.centers[tile.id],
       [U_TILE_CONNECTION]: currentPuzzle.getShaderConnectionData(tile),
       [U_GALAXY_CONNECTION]: currentPuzzle.isTileConnectedToCenter(tile)

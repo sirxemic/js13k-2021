@@ -17,31 +17,65 @@
     overflow: hidden;
     font-family: sans-serif;
     font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 0.1em #000;
   }
   canvas {
     pointer-events: none;
   }
-  .header {
+  .openMenu {
     position: fixed;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fff;
-    font-family: sans-serif;
+    font-size: 3vmin;
+    top: 1em;
+    left: 1em;
     z-index: 1;
-    pointer-events: none;
   }
-  .progress {
-    pointer-events: none;
+  .undo {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    color: #fff;
+    font-size: 3vmin;
+    top: 1em;
+    right: 1em;
+    z-index: 1;
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 100;
+    font-size: 3vmin;
+  }
+
+  .wrapper {
+    max-width: 600px;
+    background: rgba(5, 0, 13, 0.7);
+    padding: 2em;
+    box-shadow: 0 0 2vmin #000;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 0.5vmin;
+  }
+
+  h1 {
     text-align: center;
-    padding: 0.5em;
-    font-size: 5vmin;
-    background: #0005
+    margin-top: 0;
+  }
+
+  .button {
+    margin: 0 auto;
+    width: 8em;
+    text-align: center;
+    border: 1px solid;
+    padding: 0.5em 0;
+    border-radius: 0.25em;
+    cursor: pointer;
+  }
+
+  .modal .button + .button {
+    margin-top: 0.5em;
   }
 </style>
 <style>
@@ -50,8 +84,33 @@
 </head>
 <body>
   <canvas></canvas>
-  <div class="header">Galaxies</div>
-  <div class="progress"></div>
+
+  <div class="modal intro">
+    <div class="wrapper">
+      <h1>Galaxies</h1>
+      <h2>Instructions:</h2>
+      <p>Fill the empty spaces with galaxies. This can be harder than it sounds, as the galaxies will always keep their rotational symmetry.</p>
+      <p>To expand a galaxy, just drag one of its tiles. Dragging a galaxy tile onto itself will remove that tile.</p>
+      <div class="button dismiss">Got it!</div>
+    </div>
+  </div>
+
+  <div class="modal menu" style="display:none">
+    <div class="wrapper">
+      <h1>Choose difficulty</h1>
+      <div class="button" data-diff="[5,5,0,0]">5x5 - Easy</div>
+      <div class="button" data-diff="[7,7,0,0]">7x7 - Easy</div>
+      <div class="button" data-diff="[7,7,1,0]">7x7 - Hard</div>
+      <div class="button" data-diff="[7,7,1,1]">7x7 with wrapping - Hard</div>
+      <div class="button" data-diff="[9,9,1,1]">9x9 with wrapping - Hard</div>
+      <div class="button" data-diff="[11,11,1,1]">11x11 with wrapping - Hard</div>
+    </div>
+  </div>
+
+  <div class="ui">
+    <div class="undo button">Undo</div>
+    <div class="openMenu button">7x7 Easy</div>
+  </div>
   <script src="build.js"></script>
 </body>
 </html>

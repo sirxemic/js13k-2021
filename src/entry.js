@@ -1,7 +1,7 @@
 import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
-import { updateUI } from './UI.js'
+import { bindDifficultySelect, bindIntroDismiss, updateUI } from './UI.js'
 import { clamp } from './utils.js'
 import { loadAssets } from './Assets.js'
 import { loadProgress } from './Progress.js'
@@ -38,17 +38,45 @@ let transitionTime
 /**
  * The main state machine
  */
-const PUZZLE_START_TRANSITION = '1'
-const PUZZLE_STATE = '2'
-const PUZZLE_END_TRANSITION = '3'
+const INTRO = 1
+const PUZZLE_START_TRANSITION = 2
+const PUZZLE_STATE = 3
+const PUZZLE_END_TRANSITION = 4
+const PUZZLE_SWITCH_TRANSITION = 5
+
+let puzzleSettings = {
+  width: 7,
+  height: 7,
+  difficulty: 0,
+  wrapping: false
+}
 
 const mainFSM = new FSM({
+  [INTRO]: {
+    enter () {
+      const puzzle = new PuzzleGenerator(puzzleSettings).generate()
+      setCurrentPuzzle(puzzle)
+      renderer = new PuzzleRenderer()
+      TheCamera.reset()
+
+      bindIntroDismiss(() => {
+        mainFSM.setState(PUZZLE_STATE)
+      })
+
+      bindDifficultySelect((settings) => {
+        puzzleSettings = settings
+
+        mainFSM.setState(PUZZLE_SWITCH_TRANSITION)
+      })
+    }
+  },
+
   [PUZZLE_START_TRANSITION]: {
     enter () {
-      setCurrentPuzzle(new PuzzleGenerator(7, 7).generate())
+      const puzzle = new PuzzleGenerator(puzzleSettings).generate()
+      setCurrentPuzzle(puzzle)
       renderer = new PuzzleRenderer()
-      TheCamera.x %= 2
-      TheCamera.y %= 2
+      TheCamera.reset()
     },
 
     execute () {
@@ -74,7 +102,7 @@ const mainFSM = new FSM({
     enter () {
       transitionTime = 0
       selector = null
-      renderer.finishUp()
+      renderer.handleSolve()
     },
 
     execute () {
@@ -83,8 +111,23 @@ const mainFSM = new FSM({
         mainFSM.setState(PUZZLE_START_TRANSITION)
       }
     }
+  },
+
+  [PUZZLE_SWITCH_TRANSITION]: {
+    enter () {
+      transitionTime = 0
+      selector = null
+      renderer.handleCancel()
+    },
+
+    execute () {
+      transitionTime += delta
+      if (transitionTime >= 0.5) {
+        mainFSM.setState(PUZZLE_START_TRANSITION)
+      }
+    }
   }
-}, PUZZLE_START_TRANSITION)
+}, INTRO)
 
 function step () {
   mainFSM.updateFSM()

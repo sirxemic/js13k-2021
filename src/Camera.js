@@ -14,9 +14,20 @@ class Camera {
     this.viewMatrix = new Matrix4()
     this.x = 0
     this.y = 0
-    this.zoom = 1
+    this.zoom = 1000
 
     document.addEventListener('wheel', this.onWheel.bind(this))
+  }
+
+  reset () {
+    this.x = currentPuzzle.width - 1
+    this.y = currentPuzzle.height - 1
+
+    const fovX = 2 * Math.atan(TheCanvas.width / TheCanvas.height * Math.tan(FOVY / 2))
+    const zX = currentPuzzle.width / Math.tan(fovX)
+    const zY = currentPuzzle.height / Math.tan(FOVY)
+
+    this.maxZoom = 3 * Math.max(zX, zY)
   }
 
   get lookAt () {
@@ -24,11 +35,11 @@ class Camera {
   }
 
   get lookFrom () {
-    return new Vector3(this.x, this.y - 5 * this.zoom, 18 * this.zoom)
+    return new Vector3(this.x, this.y - 0.25 * this.zoom, this.zoom)
   }
 
   updateMatrix () {
-    this.zoom = clamp(this.zoom, 1, currentPuzzle.width / 2)
+    this.zoom = clamp(this.zoom, 16, this.maxZoom)
     const up = new Vector3(0, 0, 1)
     this.matrix.setTranslation(this.lookFrom)
     this.matrix.lookAt(this.lookFrom, this.lookAt, up)
@@ -50,8 +61,8 @@ class Camera {
     }
 
     if (!currentPuzzle.wrapping) {
-      this.x = clamp(this.x, 0, currentPuzzle.width - 1)
-      this.y = clamp(this.y, 0, currentPuzzle.height - 1)
+      this.x = clamp(this.x, 0, (currentPuzzle.width - 1) * 2)
+      this.y = clamp(this.y, 0, (currentPuzzle.height - 1) * 2)
     }
 
     this.updateMatrix()

@@ -6,7 +6,6 @@ import { gl } from './Graphics.js'
 import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
 import { Matrix4 } from './Math/Matrix4.js'
-import { Puzzle } from './Puzzle.js'
 import { SelectorShader } from './Shaders/SelectorShader.js'
 import { clamp, closestModulo, noop } from './utils.js'
 
@@ -19,7 +18,7 @@ export class Cursor {
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
-      this.x * 2 - 4, this.y * 2 - 4, 0, 1
+      this.x * 2, this.y * 2, 0, 1
     ])
   }
 
@@ -45,7 +44,8 @@ export class Selector {
 
     this.selectedId = -1
 
-    this.lastCursorPos = null
+    let lastCursorPos = null
+    let preventAccidentalDraw = false
 
     const fsm = this.fsm = new FSM({
       [DEFAULT_STATE]: {
@@ -76,23 +76,23 @@ export class Selector {
 
       [DRAG_OR_DRAW_STATE]: {
         enter: () => {
-          this.lastCursorPos = this.getTilePosAtPointer()
+          lastCursorPos = this.getTilePosAtPointer()
           this.selectedId = this.getIdAtPointer()
-          this.addCursorAt(this.lastCursorPos)
+          this.addCursorAt(lastCursorPos)
           if (this.selectedId > -1) {
-            this.createCursorsAtOppositeOf(this.lastCursorPos, this.selectedId)
+            this.createCursorsAtOppositeOf(lastCursorPos, this.selectedId)
           }
         },
 
         execute: () => {
           if (!Input.pointerDown) {
-            currentPuzzle.unsetSymmetricallyAt(this.lastCursorPos)
+            currentPuzzle.unsetSymmetricallyAt(lastCursorPos)
             fsm.setState(DEFAULT_STATE)
           } else {
             const { x, y } = this.getTilePosAtPointer()
 
             // Check the ID when moving over a second tile to determine the action
-            if (x !== this.lastCursorPos.x || y !== this.lastCursorPos.y) {
+            if (x !== lastCursorPos.x || y !== lastCursorPos.y) {
               if (this.selectedId === -1) {
                 fsm.setState(ERASING_STATE)
               } else {
@@ -115,13 +115,13 @@ export class Selector {
       [ERASING_STATE]: {
         enter: () => {
           const currentCursorPos = this.getTilePosAtPointer()
-          currentPuzzle.unsetSymmetricallyAt(this.lastCursorPos)
+          currentPuzzle.unsetSymmetricallyAt(lastCursorPos)
           currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
 
-          this.addCursorAt(this.lastCursorPos, -1)
+          this.addCursorAt(lastCursorPos, -1)
           this.addCursorAt(currentCursorPos, -1)
 
-          this.lastCursorPos = currentCursorPos
+          lastCursorPos = currentCursorPos
         },
 
         execute: () => {
@@ -133,12 +133,12 @@ export class Selector {
           const currentCursorPos = this.getTilePosAtPointer()
           const idAtCursor = this.getIdAtPointer()
           if (
-            (currentCursorPos.x !== this.lastCursorPos.x || currentCursorPos.y !== this.lastCursorPos.y) &&
+            (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y) &&
             (idAtCursor === this.selectedId || idAtCursor === -1 || this.selectedId === -1)
           ) {
             currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
             this.addCursorAt(currentCursorPos, -1)
-            this.lastCursorPos = currentCursorPos
+            lastCursorPos = currentCursorPos
           }
         }
       },
@@ -158,11 +158,21 @@ export class Selector {
           }
 
           const currentCursorPos = this.getTilePosAtPointer()
-          if (currentCursorPos.x !== this.lastCursorPos.x || currentCursorPos.y !== this.lastCursorPos.y) {
+          const idAtCursor = currentPuzzle.getIdAt(currentCursorPos)
+
+          if (preventAccidentalDraw && idAtCursor === this.selectedId) {
+            preventAccidentalDraw = false
+          }
+
+          if (!preventAccidentalDraw && (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y)) {
             currentPuzzle.setSymmetricallyAt(currentCursorPos, this.selectedId)
             this.addCursorAt(currentCursorPos)
             this.createCursorsAtOppositeOf(currentCursorPos)
-            this.lastCursorPos = currentCursorPos
+            lastCursorPos = currentCursorPos
+
+            if (idAtCursor !== this.selectedId) {
+              preventAccidentalDraw = true
+            }
           }
         }
       },
@@ -212,9 +222,8 @@ export class Selector {
   getTilePosAtPointer () {
     let { x, y } = TheCamera.getRayGridIntersection(Input.mouseX, Input.mouseY)
 
-    // Don't know why + 2, but it works
-    x = Math.round(x / 2) + 2
-    y = Math.round(y / 2) + 2
+    x = Math.floor((x + 1) / 2)
+    y = Math.floor((y + 1) / 2)
 
     if (!currentPuzzle.wrapping) {
       x = clamp(x, 0, currentPuzzle.width - 1)

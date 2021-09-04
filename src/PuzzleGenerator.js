@@ -1,13 +1,6 @@
-// generate_pass
-
 import { Vector2 } from './Math/Vector2.js'
 import { Puzzle } from './Puzzle.js'
-import { pickRandomFromArray, removeFromArray, zeroPad } from './utils.js'
-
-const VERTEX_TYPE = 1
-const EDGE_H_TYPE = 2
-const EDGE_V_TYPE = 3
-const CELL_TYPE = 4
+import { pickRandomFromArray } from './utils.js'
 
 /**
  * The grid consists of cells with simple coordinates:
@@ -24,9 +17,8 @@ const CELL_TYPE = 4
  * means the top-left corner. That also means that when a galaxy center is positioned in the center
  * of the first cell, its coordinates are (0.5, 0.5)
  */
-
-export class PuzzleGenerator {
-  constructor (width, height, wrapping = false) {
+class PuzzleGeneratorPass {
+  constructor (width, height, wrapping) {
     this.width = width
     this.height = height
     this.wrapping = wrapping
@@ -41,7 +33,6 @@ export class PuzzleGenerator {
     // <dev-only>
     this.debug()
     // </dev-only>
-    return new Puzzle(this.width, this.height, this.galaxies.map(galaxy => galaxy.center), this.wrapping)
   }
 
   setup () {
@@ -251,21 +242,26 @@ export class PuzzleGenerator {
 
     // Also remove the cell, its edges and corners from galaxy center potentials
     const { x, y } = pos
+
+    const xm = x + 0.5
+    const xr = (x + 1) % this.width
+    const ym = y + 0.5
+    const yb = (y + 1) % this.height
     this.availableCenterPositions.delete(`${x}_${y}`) // top-left corner
-    this.availableCenterPositions.delete(`${x + 0.5}_${y}`) // top edge
-    this.availableCenterPositions.delete(`${x + 1}_${y}`) // top-right corner
-    this.availableCenterPositions.delete(`${x}_${y + 0.5}`) // left edge
-    this.availableCenterPositions.delete(`${x + 0.5}_${y + 0.5}`) // cell center
-    this.availableCenterPositions.delete(`${x + 1}_${y + 0.5}`) // right edge
-    this.availableCenterPositions.delete(`${x}_${y + 1}`) // bottom-left corner
-    this.availableCenterPositions.delete(`${x + 0.5}_${y + 1}`) // bottom-edge
-    this.availableCenterPositions.delete(`${x + 1}_${y + 1}`) // bottom-right corner
+    this.availableCenterPositions.delete(`${xm}_${y}`) // top edge
+    this.availableCenterPositions.delete(`${xr}_${y}`) // top-right corner
+    this.availableCenterPositions.delete(`${x}_${ym}`) // left edge
+    this.availableCenterPositions.delete(`${xm}_${ym}`) // cell center
+    this.availableCenterPositions.delete(`${xr}_${ym}`) // right edge
+    this.availableCenterPositions.delete(`${x}_${yb}`) // bottom-left corner
+    this.availableCenterPositions.delete(`${xm}_${yb}`) // bottom-edge
+    this.availableCenterPositions.delete(`${xr}_${yb}`) // bottom-right corner
   }
 
   getCellAt ({ x, y }) {
     if (this.wrapping) {
       x %= this.width
-      y %= this.width
+      y %= this.height
       if (x < 0) {
         x += this.width
       }
@@ -287,6 +283,7 @@ export class PuzzleGenerator {
     })
   }
 
+  // <dev-only>
   debug () {
     let s = ''
     const mapping = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -297,5 +294,30 @@ export class PuzzleGenerator {
       s += '\n'
     }
     console.log(s)
+  }
+  // </dev-only>
+}
+
+export class PuzzleGenerator {
+  constructor ({ width, height, wrapping, difficulty }) {
+    this.width = width
+    this.height = height
+    this.wrapping = wrapping
+    this.difficulty = difficulty
+  }
+
+  generate () {
+    let pass
+
+    do {
+      pass = new PuzzleGeneratorPass(this.width, this.height, this.wrapping)
+      pass.generate()
+    } while (!this.matchesDifficulty(pass))
+    return new Puzzle(this.width, this.height, pass.galaxies.map(galaxy => galaxy.center), this.wrapping)
+  }
+
+  matchesDifficulty ({ galaxies, grid }) {
+    // TODO
+    return true
   }
 }

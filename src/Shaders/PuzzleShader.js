@@ -48,7 +48,7 @@ void main() {
   vec3 cc = mix(color, vec3(1.0), data.g * data.g * data.g);
   cc = mix(cc, vec3(1.0), starData.g);
 
-  float a = (sqrt(data.r) - (abs(vp.z) * abs(vp.z) * 2.0) - ${U_FADE_AMOUNT});
+  float a = (sqrt(data.r) - (abs(vp.z) * abs(vp.z) * 2.0) - ${U_FADE_AMOUNT}) * (1.0 - ${U_FADE_AMOUNT});
   if (data.w < 0.5) {
     a *= (sin(${U_TIME} * 300.0) + 2.0) * 0.333;
   }
