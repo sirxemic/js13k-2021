@@ -11,13 +11,19 @@ function getElement (name) {
 }
 
 function toggleVisibility (element, show) {
-  element.classList.toggle(classNames.hidden, !show)
+  element.classList.toggle(classNames._hidden, !show)
 }
+
+const introModal = getElement(classNames.intro)
+const difficultyModal = getElement(classNames.menu)
+const difficultyButton = getElement(classNames.openMenu)
+const newGameButton = getElement(classNames.new)
+const undoButton = getElement(classNames.undo)
+const loadingScreen = getElement(classNames.loading)
 
 /**
  * UI event handlers
  */
-
 let onIntroDismiss
 let onDifficultySelect
 let onUndo
@@ -41,9 +47,7 @@ export function bindNewGame (callback) {
 
 /**
  * UI controllers
- *
  */
-
 export function toggleUndo (show) {
   toggleVisibility(undoButton, show)
 }
@@ -52,48 +56,46 @@ export function updateDifficultyButton (settings) {
   difficultyButton.textContent = `${settings.width}x${settings.height}${settings.wrapping ? ' with wrapping' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
 }
 
-const introModal = getElement(classNames.intro)
-const difficultyModal = getElement(classNames.menu)
-const difficultyButton = getElement(classNames.openMenu)
-const newGameButton = getElement(classNames.new)
-const undoButton = getElement(classNames.undo)
+export function start () {
+  toggleVisibility(loadingScreen, false)
 
-introModal.onclick = () => {
-  toggleVisibility(introModal, false)
-  onIntroDismiss()
-}
+  introModal.onclick = () => {
+    toggleVisibility(introModal, false)
+    onIntroDismiss()
+  }
 
-difficultyButton.onclick = () => {
-  toggleVisibility(difficultyModal, true)
-}
+  difficultyButton.onclick = () => {
+    toggleVisibility(difficultyModal, true)
+  }
 
-newGameButton.onclick = () => {
-  onNewGame()
-}
+  newGameButton.onclick = () => {
+    onNewGame()
+  }
 
-undoButton.onclick = () => {
-  onUndo()
-}
-
-document.addEventListener('keypress', e => {
-  if (e.key === 'z') {
+  undoButton.onclick = () => {
     onUndo()
   }
-})
 
-difficultyModal.onclick = (e) => {
-  if (e.target === difficultyModal) {
-    toggleVisibility(difficultyModal, false)
-  } else if (e.target.dataset['diff']) {
-    toggleVisibility(difficultyModal, false)
-    const data = JSON.parse(e.target.dataset['diff'])
-    difficultyButton.textContent = `${data[0]}x${data[1]}${data[3] ? ' with wrapping' : ''} - ${data[2] ? 'Hard' : 'Easy'}`
-    onDifficultySelect({
-      width: data[0],
-      height: data[1],
-      difficulty: data[2],
-      wrapping: data[3]
-    })
+  document.addEventListener('keypress', e => {
+    if (e.key === 'z') {
+      onUndo()
+    }
+  })
+
+  difficultyModal.onclick = (e) => {
+    if (e.target === difficultyModal) {
+      toggleVisibility(difficultyModal, false)
+    } else if (e.target.dataset['diff']) {
+      toggleVisibility(difficultyModal, false)
+      const data = JSON.parse(e.target.dataset['diff'])
+      difficultyButton.textContent = `${data[0]}x${data[1]}${data[3] ? ' with wrapping' : ''} - ${data[2] ? 'Hard' : 'Easy'}`
+      onDifficultySelect({
+        width: data[0],
+        height: data[1],
+        difficulty: data[2],
+        wrapping: data[3]
+      })
+    }
   }
 }
 

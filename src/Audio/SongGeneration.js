@@ -1,5 +1,5 @@
-import { contextSampleRate } from './Context'
-import { EnvelopeSampler } from '../utils'
+import { contextSampleRate } from './Context.js'
+import { EnvelopeSampler } from '../utils.js'
 
 export function addSoundToBuffer (sourceDataBuffer, targetDataBuffer, offset, mono = false) {
   const maxJ = Math.min(offset + sourceDataBuffer.length, targetDataBuffer.length)
@@ -13,8 +13,8 @@ export function addSoundToBuffer (sourceDataBuffer, targetDataBuffer, offset, mo
   }
 }
 
-export function createTempBuffer (noteCount, bpm) {
-  return new Float32Array(Math.ceil(contextSampleRate * noteCount * 60 / bpm))
+export function createTempBuffer (beatCount, bpm) {
+  return new Float32Array(Math.ceil(contextSampleRate * beatCount * 60 / bpm))
 }
 
 export function makeNotesFromBars (notes) {
@@ -34,18 +34,27 @@ export function makeNotesFromBars (notes) {
 const bufferCache = {}
 
 export function addNotes (notes, output, instrument, bpm, mono = false) {
+  if (!Array.isArray(output)) {
+    output = [output]
+  }
+
   const keyPrefix = instrument.toString().substr(0,20)
   notes.forEach(note => {
     let key = keyPrefix + note.slice(1).join('|')
     if (!bufferCache[key]) {
       bufferCache[key] = instrument(getFrequencyForTone(note[1]), getLengthInSeconds(note[2] || 1, bpm), ...note.slice(3))
     }
-    addSoundToBuffer(
-      bufferCache[key],
-      output,
-      getOffsetForBeat(note[0], bpm),
-      mono
-    )
+    if (!Array.isArray(bufferCache[key])) {
+      bufferCache[key] = [bufferCache[key]]
+    }
+    for (let i = 0; i < output.length; i++) {
+      addSoundToBuffer(
+        bufferCache[key][i],
+        output[i],
+        getOffsetForBeat(note[0], bpm),
+        mono
+      )
+    }
   })
 }
 

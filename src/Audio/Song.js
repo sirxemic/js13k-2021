@@ -1,9 +1,10 @@
-import { TheAudioContext, TheAudioDestination, TheReverbDestination } from './Context'
+import { TheAudioContext, TheAudioDestination, TheReverbDestination } from './Context.js'
 
 export class Song {
-  constructor (channelConfigs) {
+  constructor (channelConfigs, loop) {
     this.channelConfigs = channelConfigs
     this.playing = false
+    this.loop = loop
 
     let master = TheAudioContext.createGain()
 
@@ -38,6 +39,13 @@ export class Song {
     })
   }
 
+  duckForABit () {
+    this.channels.forEach(channel => {
+      channel.volumeParam.linearRampToValueAtTime(0, TheAudioContext.currentTime + 0.02)
+      channel.volumeParam.linearRampToValueAtTime(channel.volume, TheAudioContext.currentTime + 4)
+    })
+  }
+
   play () {
     this.playing = true
     this.channels.forEach(channel => {
@@ -46,7 +54,7 @@ export class Song {
       }
 
       const sourceNode = TheAudioContext.createBufferSource()
-      sourceNode.loop = true
+      sourceNode.loop = this.loop
       sourceNode.loopEnd = channel.buffer.duration
       sourceNode.buffer = channel.buffer
       sourceNode.connect(channel.sourceTarget)

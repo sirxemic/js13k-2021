@@ -1,4 +1,4 @@
-export let TheAudioContext = new window.AudioContext()
+export let TheAudioContext = new window.AudioContext({ sampleRate: 22050 }) // Set explicit lower samplerate to speed up sound generation
 export let TheAudioDestination = TheAudioContext.destination
 
 export let TheReverbDestination

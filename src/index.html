@@ -22,6 +22,16 @@
     text-shadow: 0 0 0.1em #000;
   }
 
+  .loading {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(5, 0, 13);
+  }
+
   .button {
     min-width: 6em;
     text-align: center;
@@ -71,7 +81,7 @@
   }
 
   .wrapper {
-    max-width: 600px;
+    max-width: 30em;
     padding: 2em;
     border-radius: 0.5vmin;
     box-shadow: 0 0 2vmin #000;
@@ -86,7 +96,7 @@
     margin-top: 0.5em;
   }
 
-  .hidden {
+  ._hidden {
     display: none !important;
   }
 </style>
@@ -96,6 +106,8 @@
 </head>
 <body>
   <canvas></canvas>
+
+  <div class="loading">Loading...</div>
 
   <div class="modal intro">
     <div class="wrapper">
@@ -107,7 +119,7 @@
     </div>
   </div>
 
-  <div class="modal menu hidden">
+  <div class="modal menu _hidden">
     <div class="wrapper">
       <h1>Choose difficulty</h1>
       <div class="button" data-diff="[5,5,0,0]">5x5 - Easy</div>
@@ -120,7 +132,7 @@
   </div>
 
   <div class="ui">
-    <div class="undo button hidden">Undo</div>
+    <div class="undo button _hidden">Undo</div>
     <div class="openMenu button"></div>
     <div class="new button">New game</div>
   </div>

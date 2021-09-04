@@ -10,6 +10,7 @@ export const classNames = {
   openMenu: 'i',
   new: 'j',
   ui: 'k',
-  hidden: 'l',
-  modal: 'm'
+  _hidden: 'l',
+  modal: 'm',
+  loading: 'n'
 }

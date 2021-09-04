@@ -1,3 +1,5 @@
+import { ErrorSound, PlaceSound } from './Assets.js'
+import { playSample } from './Audio.js'
 import { TheCamera } from './Camera.js'
 import { FSM } from './FSM.js'
 import { SelectorCube } from './Geometries/SelectorCube.js'
@@ -49,6 +51,8 @@ export class Selector {
 
     this.undoStack = []
 
+    this.createdErrorCursor = false
+
     const fsm = this.fsm = new FSM({
       [DEFAULT_STATE]: {
         enter: () => {
@@ -78,7 +82,7 @@ export class Selector {
 
       [DRAG_OR_DRAW_STATE]: {
         enter: () => {
-          this.addStateToUndoStack()
+          this.stateBeforeDraw = this.getState()
 
           lastCursorPos = this.getTilePosAtPointer()
           this.selectedId = this.getIdAtPointer()
@@ -112,6 +116,7 @@ export class Selector {
         },
 
         leave: () => {
+          this.handleDrawFinish()
           this.clearCursors()
         }
       },
@@ -123,7 +128,7 @@ export class Selector {
           currentPuzzle.unsetSymmetricallyAt(lastCursorPos)
           currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
 
-          this.addCursorAt(lastCursorPos, -1)
+          this.addCursorWithSoundAt(lastCursorPos, -1)
           this.addCursorAt(currentCursorPos, -1)
 
           lastCursorPos = currentCursorPos
@@ -142,9 +147,13 @@ export class Selector {
             (idAtCursor === this.selectedId || idAtCursor === -1 || this.selectedId === -1)
           ) {
             currentPuzzle.unsetSymmetricallyAt(currentCursorPos)
-            this.addCursorAt(currentCursorPos, -1)
+            this.addCursorWithSoundAt(currentCursorPos, -1)
             lastCursorPos = currentCursorPos
           }
+        },
+
+        leave: () => {
+          this.handleDrawFinish()
         }
       },
 
@@ -152,7 +161,7 @@ export class Selector {
         enter: () => {
           const currentPos = this.getTilePosAtPointer()
           currentPuzzle.setSymmetricallyAt(currentPos, this.selectedId)
-          this.addCursorAt(currentPos)
+          this.addCursorWithSoundAt(currentPos)
           this.createCursorsAtOppositeOf(currentPos)
         },
 
@@ -171,7 +180,7 @@ export class Selector {
 
           if (!preventAccidentalDraw && (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y)) {
             currentPuzzle.setSymmetricallyAt(currentCursorPos, this.selectedId)
-            this.addCursorAt(currentCursorPos)
+            this.addCursorWithSoundAt(currentCursorPos)
             this.createCursorsAtOppositeOf(currentCursorPos)
             lastCursorPos = currentCursorPos
 
@@ -179,6 +188,10 @@ export class Selector {
               preventAccidentalDraw = true
             }
           }
+        },
+
+        leave: () => {
+          this.handleDrawFinish()
         }
       },
 
@@ -224,13 +237,17 @@ export class Selector {
     this.invalidCursors = {}
   }
 
-  addStateToUndoStack () {
-    const currentState = currentPuzzle.tiles.map(tile => tile.id)
-    const previousState = this.undoStack[this.undoStack.length - 1]
-    if (currentState.toString() === previousState?.toString()) {
+  getState () {
+    return currentPuzzle.tiles.map(tile => tile.id)
+  }
+
+  handleDrawFinish () {
+    const stateBeforeDraw = this.stateBeforeDraw
+    const stateAfterDraw = this.getState()
+    if (stateAfterDraw.toString() === stateBeforeDraw.toString()) {
       return
     }
-    this.undoStack.push(currentPuzzle.tiles.map(tile => tile.id))
+    this.undoStack.push(this.stateBeforeDraw)
   }
 
   canUndo () {
@@ -264,7 +281,7 @@ export class Selector {
   }
 
   addCursorAtPointer (expected = this.selectedId) {
-    return this.addCursorAt(this.getTilePosAtPointer(), expected)
+    this.addCursorAt(this.getTilePosAtPointer(), expected)
   }
 
   createCursorsAtOppositeOf ({ x, y }, expected = this.selectedId) {
@@ -301,7 +318,14 @@ export class Selector {
 
     const targetCollection = id === expected ? this.validCursors : this.invalidCursors
 
-    return targetCollection[`${pos.x},${pos.y}`] = new Cursor(pos)
+    targetCollection[`${pos.x},${pos.y}`] = new Cursor(pos)
+
+    return id === expected
+  }
+
+  addCursorWithSoundAt (pos, expected = this.selectedId) {
+    const result = this.addCursorAt(pos, expected)
+    this.soundToPlay = result ? PlaceSound : ErrorSound
   }
 
   getIdAtPointer () {
@@ -311,6 +335,11 @@ export class Selector {
 
   step () {
     this.fsm.updateFSM()
+
+    if (this.soundToPlay) {
+      playSample(this.soundToPlay)
+      this.soundToPlay = null
+    }
   }
 
   render () {

@@ -1,9 +1,9 @@
 import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { currentPuzzle, delta, setCurrentPuzzle, setDelta } from './globals.js'
-import { bindDifficultySelect, bindIntroDismiss, bindNewGame, bindUndo, toggleUndo, updateDifficultyButton } from './UI.js'
+import { bindDifficultySelect, bindIntroDismiss, bindNewGame, bindUndo, start, toggleUndo, updateDifficultyButton } from './UI.js'
 import { clamp } from './utils.js'
-import { loadAssets } from './Assets.js'
+import { loadAssets, MainSong, VictorySong } from './Assets.js'
 import { loadProgress } from './Progress.js'
 import { PuzzleRenderer } from './PuzzleRenderer.js'
 import { Grid } from './Grid.js'
@@ -11,6 +11,7 @@ import { Selector } from './Selector.js'
 import { StarsLayer } from './StarsLayer.js'
 import { FSM } from './FSM.js'
 import { PuzzleGenerator } from './PuzzleGenerator.js'
+import { TheAudioContext } from './Audio/Context.js'
 
 function resizeCanvas () {
   TheCanvas.width = window.innerWidth
@@ -59,7 +60,12 @@ const mainFSM = new FSM({
       renderer = new PuzzleRenderer()
       TheCamera.reset()
 
-      bindIntroDismiss(() => {
+      bindIntroDismiss(async () => {
+        await TheAudioContext.resume()
+        if (!MainSong.playing) {
+          MainSong.play()
+        }
+
         mainFSM.setState(PUZZLE_STATE)
       })
 
@@ -78,6 +84,8 @@ const mainFSM = new FSM({
           selector.undo()
         }
       })
+
+      start()
     }
   },
 
@@ -111,6 +119,8 @@ const mainFSM = new FSM({
 
   [PUZZLE_SOLVED]: {
     enter () {
+      VictorySong.play()
+      MainSong.duckForABit()
       selector = null
     }
   },
@@ -170,7 +180,7 @@ function tick (time) {
     step()
     render()
 
-    toggleUndo(selector?.canUndo())
+    toggleUndo(selector ? selector.canUndo() : false)
     updateDifficultyButton(puzzleSettings)
   }
 
