@@ -32,22 +32,6 @@ export function distanceSquared(x1, y1, x2, y2) {
   return dx * dx + dy * dy
 }
 
-export function pickRandomFromArray (array) {
-  return array[Math.floor(Math.random() * array.length)]
-}
-
-export function pick (...args) {
-  return args[Math.floor(Math.random() * args.length)]
-}
-
-export function removeFromArray (array, item) {
-  const index = array.indexOf(item)
-  if (index > -1) {
-    array.splice(index, 1)
-  }
-  return index
-}
-
 export function closestModulo (target, number, base) {
   while (number < target - base / 2) {
     number += base
@@ -56,6 +40,34 @@ export function closestModulo (target, number, base) {
     number -= base
   }
   return number
+}
+
+/**
+ * Collection utilities
+ */
+
+export function pickRandomFromArray (array) {
+  return array[Math.floor(Math.random() * array.length)]
+}
+
+export function pick (...args) {
+  return args[Math.floor(Math.random() * args.length)]
+}
+
+export function popFromSet (set) {
+  for (const el of set) {
+    set.delete(el)
+    return el
+  }
+  return null
+}
+
+export function removeFromArray (array, item) {
+  const index = array.indexOf(item)
+  if (index > -1) {
+    array.splice(index, 1)
+  }
+  return index
 }
 
 /**

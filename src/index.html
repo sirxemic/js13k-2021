@@ -61,6 +61,17 @@
     left: 50%;
     transform: translateX(-50%);
   }
+  .restart {
+    border-radius: 0.25em 0 0 0.25em;
+  }
+  .new {
+    border-radius: 0;
+    border-left: none;
+  }
+  .solve {
+    border-radius: 0 0.25em 0.25em 0;
+    border-left: none;
+  }
 
   .wrapper, .ui .button {
     background: rgba(5, 0, 13, 0.7);
@@ -142,14 +153,14 @@
       <div class="button" data-diff="[5,5,0,0]">5x5 - Easy</div>
       <div class="button" data-diff="[7,7,0,0]">7x7 - Easy</div>
       <div class="button" data-diff="[7,7,1,0]">7x7 - Hard</div>
-      <div class="button" data-diff="[7,7,1,1]">7x7 with wrapping - Hard</div>
-      <div class="button" data-diff="[9,9,1,1]">9x9 with wrapping - Hard</div>
-      <div class="button" data-diff="[11,11,1,1]">11x11 with wrapping - Hard</div>
+      <div class="button" data-diff="[7,7,1,1]">7x7 no border - Hard</div>
+      <div class="button" data-diff="[9,9,1,1]">9x9 no border - Hard</div>
+      <div class="button" data-diff="[11,11,1,1]">11x11 no border - Hard</div>
     </div>
   </div>
 
   <div class="ui">
-    <div class="congratulations _hidden">Congrats!</div>
+    <div class="congratulations _hidden">Nice!</div>
     <div class="undo button _hidden">Undo</div>
     <div class="openMenu button"></div>
     <div class="bottomButtons _hidden">

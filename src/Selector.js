@@ -384,7 +384,6 @@ export class Selector {
       VictorySong.play()
       MainSong.duckForABit()
       showCongratulations()
-      console.log('show')
     }
   }
 

@@ -1,6 +1,6 @@
 import { Vector2 } from './Math/Vector2.js'
 import { Puzzle } from './Puzzle.js'
-import { pickRandomFromArray } from './utils.js'
+import { pickRandomFromArray, popFromSet } from './utils.js'
 
 // <dev-only>
 // let s = 123456
@@ -38,6 +38,8 @@ class PuzzleGeneratorPass {
       this.addGalaxy()
     }
     this.mergeSingletons()
+    this.generateConnectivityMap()
+
     // <dev-only>
     this.debug()
     // </dev-only>
@@ -64,6 +66,8 @@ class PuzzleGeneratorPass {
         this.availableCenterPositions.add(`${x}_${y}`)
       }
     }
+
+    this.centerGalaxyCells = new Map()
   }
 
   addGalaxy () {
@@ -82,9 +86,10 @@ class PuzzleGeneratorPass {
     const cells = this.setGalaxyCenterAt(center, id)
 
     this.galaxies.push({
+      id,
       center,
       cells,
-      staticCount: cells.size
+      centerCells: new Set(cells)
     })
 
     // Due to symmetry we don't have to process all cells:
@@ -101,17 +106,8 @@ class PuzzleGeneratorPass {
 
     while (toProcess.length > 0 && cells.size < maxSize) {
       const cell = pickRandomFromArray(toProcess)
-      const { x, y } = cell
-      const potential = [
-        this.getCellAt({ x, y: y - 1 }),
-        this.getCellAt({ x: x - 1, y }),
-        this.getCellAt({ x: x + 1, y }),
-        this.getCellAt({ x, y: y + 1})
-      ]
+      const potential = this.getNeighbours(cell)
         .filter(neighbor => (
-          // In case wrapping is disabled, a neighbor might not even exist in a certain direction
-          neighbor &&
-
           // Filter out the neighbors that are already taken
           neighbor.id === -1 &&
 
@@ -150,7 +146,9 @@ class PuzzleGeneratorPass {
     const processCells = (center, cells) => {
       if (cells.length <= 1) return
 
-      this.galaxies.push({ center, cells })
+      cells = new Set(cells)
+
+      this.galaxies.push({ center, cells, centerCells: cells })
       cells.forEach(cell => {
         galaxiesToRemove.push(cell.id)
         cell.isSingleton = false
@@ -228,6 +226,15 @@ class PuzzleGeneratorPass {
     }
   }
 
+  getNeighbours ({ x, y }) {
+    return [
+      this.getCellAt({ x, y: y - 1 }),
+      this.getCellAt({ x: x - 1, y }),
+      this.getCellAt({ x: x + 1, y }),
+      this.getCellAt({ x, y: y + 1})
+    ].filter(x => x)
+  }
+
   setGalaxyCenterAt ({ x, y }, id) {
     let xs = x % 1 === 0.5 ? [x - 0.5] : [x - 1, x]
     let ys = y % 1 === 0.5 ? [y - 0.5] : [y - 1, y]
@@ -238,6 +245,8 @@ class PuzzleGeneratorPass {
         const cell = this.getCellAt({ x, y })
         this.updateCell(cell, id)
         result.add(cell)
+
+        this.centerGalaxyCells.set(cell, id)
       }
     }
 
@@ -290,6 +299,48 @@ class PuzzleGeneratorPass {
     })
   }
 
+  /**
+   * Generate a utility for fetching for a cell which galaxies it can be part of
+   */
+  generateConnectivityMap () {
+    this.connectivity = new Map()
+    for (const cell of this.grid) {
+      this.connectivity.set(cell, new Set())
+    }
+
+    for (const galaxy of this.galaxies) {
+      const toProcess = new Set(galaxy.cells)
+      const done = new Set()
+
+      while (toProcess.size > 0) {
+        const cell = popFromSet(toProcess)
+        const opposite = this.getOppositeCell(cell, galaxy.center)
+        toProcess.delete(opposite)
+
+        this.connectivity.get(cell).add(galaxy.id)
+        this.connectivity.get(opposite).add(galaxy.id)
+
+        done.add(cell)
+        done.add(opposite)
+
+        const neighbours = this.getNeighbours(cell)
+        for (const neighbour of neighbours) {
+          if (done.has(neighbour)) {
+            continue
+          }
+          const opposite = this.getOppositeCell(neighbour, galaxy.center)
+          if (opposite && !this.centerGalaxyCells.has(opposite)) {
+            toProcess.add(neighbour)
+          }
+        }
+      }
+    }
+  }
+
+  isCellAccessibleFromGalaxy (cell, id) {
+    return this.connectivity.get(cell).has(id)
+  }
+
   // <dev-only>
   debug () {
     let s = ''
@@ -323,18 +374,72 @@ export class PuzzleGenerator {
     return new Puzzle(this.width, this.height, pass.galaxies, this.wrapping)
   }
 
-  matchesDifficulty ({ galaxies, grid }) {
+  matchesDifficulty (pass) {
+    const { galaxies, grid } = pass
+
+    // Check that there aren't too many galaxies to expand
     let expandableGalaxyCount = 0
     for (const galaxy of galaxies) {
-      if (galaxy.staticCount < galaxy.cells.size) {
+      if (galaxy.centerCells.size < galaxy.cells.size) {
         expandableGalaxyCount++
       }
     }
     const minimum = this.difficulty === 0 ? 3 : 5
-    const maximum = (this.width + this.height) / 2 - 1
+    const maximum = Math.sqrt(this.width * this.height) - 1
     if (expandableGalaxyCount < minimum || expandableGalaxyCount > maximum) {
       return false
     }
-    return true
+
+    // Check if a cell can only be part of one galaxy
+    const isTrivialCell = (cell) => {
+      let possibleGalaxyCount = 0
+      for (const galaxy of galaxies) {
+        if (pass.isCellAccessibleFromGalaxy(cell, galaxy.id)) {
+          possibleGalaxyCount++
+
+          if (possibleGalaxyCount > 1) {
+            return false
+          }
+        }
+      }
+      return possibleGalaxyCount === 1
+    }
+
+    // Check if a galaxy can only have one shape
+    const isTrivialGalaxy = (galaxy) => {
+      let possibleCellCount = 0
+      for (const cell of pass.grid) {
+        if (pass.isCellAccessibleFromGalaxy(cell, galaxy.id)) {
+          possibleCellCount++
+        }
+      }
+      return possibleCellCount === galaxy.cells.size
+    }
+
+    let trivialCells = new Set()
+    for (const cell of grid) {
+      if (isTrivialCell(cell)) {
+        trivialCells.add(cell)
+      }
+    }
+
+    let trivialGalaxyCount = 0
+    for (const galaxy of galaxies) {
+      if (isTrivialGalaxy(galaxy)) {
+        trivialGalaxyCount++
+
+        // We only care about trivial cells that are not part of a trivial galaxy
+        for (const cell of galaxy.cells) {
+          trivialCells.delete(cell)
+        }
+      }
+    }
+
+    if (this.difficulty === 0) {
+      return trivialGalaxyCount >= galaxies.length * 0.5
+    } else {
+      return (trivialGalaxyCount > galaxies.length * 0.1 || trivialCells.size > Math.sqrt(this.width * this.height)) &&
+        (trivialGalaxyCount <= galaxies.length * 0.5)
+    }
   }
 }

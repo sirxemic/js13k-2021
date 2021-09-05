@@ -28,13 +28,19 @@ async function createBassTrack () {
     [28, -33, 4]
   ], loop, createBassSound, bpm, true)
 
+  const loop2 = new Float32Array(loop)
+  // Change one note in the second loop
+  addNotes([
+    [12, -39, 4],
+  ], loop2, createBassSound, bpm, true)
+
   await waitForNextFrame()
 
   const output = createTempBuffer(trackBeatCount, bpm)
   output.set(loop, 0)
-  output.set(loop, getOffsetForBar(8, bpm))
+  output.set(loop2, getOffsetForBar(8, bpm))
   output.set(loop, getOffsetForBar(16, bpm))
-  output.set(loop, getOffsetForBar(24, bpm))
+  output.set(loop2, getOffsetForBar(24, bpm))
 
   return createAudioBuffer(output)
 }
@@ -73,6 +79,12 @@ async function createPadsTrack () {
 
   const d_5_10maj = createChord([-19, -12, -3])
   const bb_5_10 = createChord([-23, -16, -7])
+  const gb_8_13a = createChord([-27, -15, -7])
+
+  await waitForNextFrame()
+
+  const bb_5_10_12 = createChord([-23, -16, -7, -4])
+  const c_5_8_10 = createChord([-21, -14, -9, -5])
 
   const chordProgression = [
     d_5_9,
@@ -86,12 +98,12 @@ async function createPadsTrack () {
 
     d_5_10maj,
     bb_5_10,
-    d_5_9,
-    f_8_12,
+    d_5_10maj,
+    gb_8_13a,
     g_5_9_12,
     a_5_8_10,
-    bb_5_9_12,
-    c_5_8_13
+    bb_5_10_12,
+    c_5_8_10
   ]
 
   for (let i = 0; i < chordProgression.length; i++) {
@@ -167,7 +179,7 @@ async function createMelodyTrack () {
 
     [40, 5],
     [41, 12],
-    [42, 8],
+    [42, 9],
     [43, 15],
 
     [44, 5],
