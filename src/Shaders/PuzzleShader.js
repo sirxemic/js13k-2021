@@ -38,28 +38,23 @@ vec3 hsv2rgb(vec3 c)
 }
 
 void main() {
+  float fi = 1.0 - ${U_FADE_AMOUNT};
   vec4 data = texture2D(${U_TEXTURE}, uv);
-  vec4 starData = texture2D(${U_TEXTURE_STARS}, uv + 3.714 * vp.z + ${U_TIME});
+  vec4 starData = texture2D(${U_TEXTURE_STARS}, (vp.xy + ${U_TIME} * 2.0) * 0.2);
 
-  float sn = noise(vp);
-  float sn2 = noise(vec3(vp.xy, 10.0));
-  vec3 color = hsv2rgb(vec3(data.b + sn * 0.08, 1.0, 0.7 - sn2 * 0.2));
+  float sn = noise(vec3(vp + ${U_TIME}));
+  vec3 color = hsv2rgb(vec3(data.b + sn * 0.12 - 0.02, 1.0, 1.0));
 
-  vec3 cc = mix(color, vec3(1.0), data.g * data.g * data.g);
-  cc = mix(cc, vec3(1.0), starData.g);
+  vec3 cc = mix(color, vec3(1.3), (data.g + starData.y * starData.x) * data.g + starData.y * starData.x * 0.5);
 
-  float a = (sqrt(data.r) - (abs(vp.z) * abs(vp.z) * 2.0) - ${U_FADE_AMOUNT}) * (1.0 - ${U_FADE_AMOUNT});
+  float a = (1.0 + data.g + ${U_FADE_AMOUNT} + starData.y) * data.r * data.r * fi;
+
+  a = sqrt(a) - pow(${U_FADE_AMOUNT} * 0.5, 2.0);
   if (data.w < 0.5) {
     a *= (sin(${U_TIME} * 300.0) + 2.0) * 0.333;
   }
 
-  if (starData.r > 0.5 && starData.g > 0.5 && a > 0.0) a *= 0.9;
-  else if (data.g > 0.0) {
-    a *= max(0.07, (data.g + ${U_FADE_AMOUNT}) * 0.1);
-  }
-  else a *= 0.07;
-
-  gl_FragColor = vec4(cc, a);
+  gl_FragColor = vec4(cc * a, 1.0);
 }
 `
 

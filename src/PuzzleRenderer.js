@@ -1,7 +1,6 @@
 import { StarFieldTexture } from './Assets.js'
 import { TheCamera } from './Camera.js'
 import { Quad } from './Geometries/Quad.js'
-import { StackedQuads } from './Geometries/StackedQuads.js'
 import { currentPuzzle, delta } from './globals.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { RenderTarget } from './Graphics/RenderTarget.js'
@@ -62,7 +61,7 @@ export class PuzzleRenderer {
     this.renderMask()
     gl.viewport(0, 0, TheCanvas.width, TheCanvas.height)
     gl.disable(gl.DEPTH_TEST)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    gl.blendFunc(gl.ONE, gl.ONE)
 
     PuzzleShader.use({
       [U_TEXTURE]: { slot: 0, texture: this.mask },
@@ -99,7 +98,7 @@ export class PuzzleRenderer {
             )
           ),
         })
-        StackedQuads.draw()
+        Quad.draw()
       }
     }
 

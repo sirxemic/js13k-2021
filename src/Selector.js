@@ -96,7 +96,7 @@ export class Selector {
 
         execute: () => {
           if (!Input.pointerDown) {
-            currentPuzzle.unsetSymmetricallyAt(lastCursorPos)
+            this.eraseAt(lastCursorPos)
             fsm.setState(DEFAULT_STATE)
           } else {
             const { x, y } = this.getTilePosAtPointer()

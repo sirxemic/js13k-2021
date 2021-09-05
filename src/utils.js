@@ -46,6 +46,16 @@ export function closestModulo (target, number, base) {
  * Collection utilities
  */
 
+export function shuffle (array) {
+  for (let i = 0; i < array.length; i++) {
+    const j = i + Math.floor(Math.random() * (array.length - i))
+    const temp = array[i]
+    array[i] = array[j]
+    array[j] = temp
+  }
+  return array
+}
+
 export function pickRandomFromArray (array) {
   return array[Math.floor(Math.random() * array.length)]
 }

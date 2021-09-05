@@ -1,4 +1,5 @@
 import { Vector4 } from './Math/Vector4.js'
+import { shuffle } from './utils.js'
 
 export const INVALID_POS = -2
 export const EMPTY = -1
@@ -22,9 +23,9 @@ export class Puzzle {
       y: this.height / 2 - 0.5
     }
 
-    this.colorIds = [
+    this.colorIds = shuffle([
       0, 1, 2, 3, 4, 5
-    ]
+    ])
 
     this.setCenterTiles()
 

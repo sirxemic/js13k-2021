@@ -1,6 +1,6 @@
 import { Geometry } from '../Geometry.js'
 
-const N = 32
+const N = 1
 const vertices = []
 const indices = []
 for (let i = 0; i < N; i++) {
