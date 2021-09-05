@@ -22,7 +22,7 @@ const restartGameButton = getElement(classNames.restart)
 const solveGameButton = getElement(classNames.solve)
 const undoButton = getElement(classNames.undo)
 const loadingScreen = getElement(classNames.loading)
-const bottomButtons = getElement(classNames.bottomButtons)
+const topButtons = getElement(classNames.topButtons)
 const congratulations = getElement(classNames.congratulations)
 
 /**
@@ -67,12 +67,12 @@ export function toggleUndo (show) {
 }
 
 export function showButtons () {
-  toggleVisibility(bottomButtons, true)
+  toggleVisibility(topButtons, true)
 }
 
 export function hideButtons () {
   toggleUndo(false)
-  toggleVisibility(bottomButtons, false)
+  toggleVisibility(topButtons, false)
 }
 
 export function showCongratulations () {

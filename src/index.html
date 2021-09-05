@@ -42,24 +42,24 @@
     transition: all 0.2s ease;
   }
 
-  .openMenu, .undo, .bottomButtons {
+  .topButtons, .bottomButtons {
+    --p: max(25px, 1em);
     position: fixed;
     z-index: 1;
     transition: all 0.2s ease;
   }
-  .openMenu {
-    top: max(25px, 1em);
-    left: max(25px, 1em);
-  }
-  .undo {
-    top: max(25px, 1em);
-    right: max(25px, 1em);
+  .topButtons {
+    display: flex;
+    top: var(--p);
+    left: 50%;
+    transform: translateX(-50%);
   }
   .bottomButtons {
     display: flex;
-    bottom: max(25px, 1em);
-    left: 50%;
-    transform: translateX(-50%);
+    justify-content: space-between;
+    left: var(--p);
+    bottom: var(--p);
+    right: var(--p);
   }
   .restart {
     border-radius: 0.25em 0 0 0.25em;
@@ -118,9 +118,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 5vw;
+    font-size: 15vh;
     transition: all 0.5s ease;
-    text-shadow: 0 0 0.1em rgba(0,0,0,0.3);
+    text-shadow: 0 0 0.08em rgba(0,0,0,0.4);
   }
 
   ._hidden {
@@ -161,12 +161,14 @@
 
   <div class="ui">
     <div class="congratulations _hidden">Nice!</div>
-    <div class="undo button _hidden">Undo</div>
-    <div class="openMenu button"></div>
-    <div class="bottomButtons _hidden">
+    <div class="topButtons _hidden">
       <div class="restart button">Restart</div>
       <div class="new button">New game</div>
       <div class="solve button">Solve</div>
+    </div>
+    <div class="bottomButtons">
+      <div class="openMenu button"></div>
+      <div class="undo button _hidden">Undo</div>
     </div>
   </div>
   <script src="build.js"></script>

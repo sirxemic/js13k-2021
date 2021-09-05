@@ -15,6 +15,7 @@ export const classNames = {
   loading: 'n',
   restart: 'o',
   solve: 'p',
-  bottomButtons: 'q',
-  congratulations: 'r'
+  topButtons: 'q',
+  bottomButtons: 'r',
+  congratulations: 's'
 }
