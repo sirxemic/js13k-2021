@@ -38,7 +38,7 @@ export class Puzzle {
       (_, index) => {
         const x = index % this.width
         const y = Math.floor(index / this.width)
-        return { x, y, id: EMPTY }
+        return { x, y, id: EMPTY, locked: false }
       }
     )
 
@@ -69,10 +69,26 @@ export class Puzzle {
     return this.disconnectedTiles.size === 0
   }
 
-  setSymmetricallyAt (pos, id) {
-    const currentId = this.getIdAt(pos)
+  toggleLockedAt (pos) {
+    const tile = this.getTileAt(pos)
+    if (tile.id === EMPTY || this.isCenter(pos)) {
+      return false
+    }
+    const newLocked = !tile.locked
+    const opposite = this.getOpposite(pos, tile.id)
+    const oppositeTile = this.getTileAt(opposite)
+    tile.locked = oppositeTile.locked = newLocked
+    return true
+  }
 
-    if (currentId === id) {
+  setSymmetricallyAt (pos, id) {
+    const tile = this.getTileAt(pos)
+
+    if (tile.id === id) {
+      return false
+    }
+
+    if (tile.locked) {
       return false
     }
 
@@ -83,11 +99,10 @@ export class Puzzle {
       return false
     }
 
-    if (this.isCenter(pos) || this.isCenter(opposite)) {
+    if (this.isCenter(pos) || this.isCenter(opposite) || this.getTileAt(opposite).locked) {
       return false
     }
 
-    // TODO: check if this even is intuitive
     let oldId = this.getIdAt(pos)
     if (oldId > -1 && oldId !== id) {
       const opposite2 = this.getOpposite(pos, oldId)
@@ -96,7 +111,6 @@ export class Puzzle {
       }
     }
 
-    // TODO: check if this even is intuitive
     oldId = this.getIdAt(opposite)
     if (oldId > -1 && oldId !== id) {
       const oppositeOpposite = this.getOpposite(opposite, oldId)
@@ -114,8 +128,9 @@ export class Puzzle {
   }
 
   unsetSymmetricallyAt (pos) {
-    const id = this.getIdAt(pos)
-    if (id < 0 || !this.canUnsetAt(pos)) {
+    const { id, locked } = this.getTileAt(pos)
+
+    if (id < 0 || !this.canUnsetAt(pos) || locked) {
       return false
     }
 
@@ -123,9 +138,10 @@ export class Puzzle {
 
     const opposite = this.getOpposite(pos, id)
 
-    if (this.canUnsetAt(opposite)) {
+    // If the cell at pos can be unset, the opposite has to be unsettable as well
+    //if (this.canUnsetAt(opposite)) {
       this.setAt(opposite, EMPTY)
-    }
+    //}
 
     this.updateConnections()
 
@@ -175,6 +191,7 @@ export class Puzzle {
 
   setAt (pos, id) {
     const tile = this.getTileAt(pos)
+    tile.locked = false
     tile.id = id
   }
 

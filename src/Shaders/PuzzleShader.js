@@ -38,20 +38,23 @@ vec3 hsv2rgb(vec3 c)
 }
 
 void main() {
+  float t = ${U_TIME} * 0.1;
   float fi = 1.0 - ${U_FADE_AMOUNT};
   vec4 data = texture2D(${U_TEXTURE}, uv);
-  vec4 starData = texture2D(${U_TEXTURE_STARS}, (vp.xy + ${U_TIME} * 2.0) * 0.2);
+  vec4 starData = texture2D(${U_TEXTURE_STARS}, (vp.xy + t) * 0.1);
 
-  float sn = noise(vec3(vp + ${U_TIME}));
-  vec3 color = hsv2rgb(vec3(data.b + sn * 0.12 - 0.02, 1.0, 1.0));
+  float sn = noise(vec3(vp + t));
+  vec3 color = hsv2rgb(vec3(data.b + sn * 0.08, 1.0, 1.0)) + 0.15;
 
   vec3 cc = mix(color, vec3(1.3), (data.g + starData.y * starData.x) * data.g + starData.y * starData.x * 0.5);
+  cc = mix(cc, vec3(1.0), starData.x);
+
 
   float a = (1.0 + data.g + ${U_FADE_AMOUNT} + starData.y) * data.r * data.r * fi;
 
   a = sqrt(a) - pow(${U_FADE_AMOUNT} * 0.5, 2.0);
   if (data.w < 0.5) {
-    a *= (sin(${U_TIME} * 300.0) + 2.0) * 0.333;
+    a *= (sin(t * 50.0) + 2.0) * 0.333;
   }
 
   gl_FragColor = vec4(cc * a, 1.0);

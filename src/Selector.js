@@ -1,9 +1,9 @@
-import { ErrorSound, MainSong, PlaceSound, VictorySong } from './Assets.js'
+import { ErrorSound, LockSound, MainSong, PlaceSound, VictorySong } from './Assets.js'
 import { playSample } from './Audio.js'
 import { TheCamera } from './Camera.js'
 import { FSM } from './FSM.js'
 import { SelectorCube } from './Geometries/SelectorCube.js'
-import { currentPuzzle } from './globals.js'
+import { currentPuzzle, currentTime } from './globals.js'
 import { gl } from './Graphics.js'
 import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
@@ -12,7 +12,7 @@ import { SelectorShader } from './Shaders/SelectorShader.js'
 import { showCongratulations, toggleUndo } from './UI.js'
 import { clamp, closestModulo, noop } from './utils.js'
 
-export class Cursor {
+class Cursor {
   constructor ({ x, y }) {
     this.x = x
     this.y = y
@@ -27,10 +27,53 @@ export class Cursor {
 
   render () {
     SelectorShader.use({
-      [U_TIME]: performance.now() / 1000,
+      [U_TIME]: currentTime,
       [U_MODELMATRIX]: this.worldMatrix
     })
     SelectorCube.draw()
+  }
+}
+
+class Brush {
+  constructor (start, callback) {
+    this.start = start
+    this.callback = callback
+  }
+
+  handlePos (pos) {
+    for (const pos2 of this.getPathFromTo(pos)) {
+      if (!this.callback(pos2)) {
+        break
+      }
+      this.start = pos2
+    }
+  }
+
+  *getPathFromTo (pos) {
+    const dx = pos.x - this.start.x
+    const dy = pos.y - this.start.y
+
+    let { x, y } = this.start
+    while (x !== pos.x || y !== pos.y) {
+      const diffX = Math.abs(x - pos.x)
+      const diffY = Math.abs(y - pos.y)
+      if (diffX > diffY) {
+        x += Math.sign(dx)
+        yield { x, y }
+      } else if (diffX < diffY) {
+        y += Math.sign(dy)
+        yield { x, y }
+      } else {
+        const fromId = currentPuzzle.getIdAt({ x, y })
+        const toXId = currentPuzzle.getIdAt({ x: x + Math.sign(dx), y })
+        if (toXId === fromId) {
+          x += Math.sign(dx)
+        } else {
+          y += Math.sign(dy)
+        }
+        yield { x, y }
+      }
+    }
   }
 }
 
@@ -54,6 +97,8 @@ export class Selector {
     this.undoStack = []
 
     this.createdErrorCursor = false
+
+    this.startTimestamp = 0
 
     const fsm = this.fsm = new FSM({
       [DEFAULT_STATE]: {
@@ -84,6 +129,7 @@ export class Selector {
 
       [DRAG_OR_DRAW_STATE]: {
         enter: () => {
+          this.startTimestamp = currentTime
           this.stateBeforeDraw = this.getState()
 
           lastCursorPos = this.getTilePosAtPointer()
@@ -96,7 +142,14 @@ export class Selector {
 
         execute: () => {
           if (!Input.pointerDown) {
-            this.eraseAt(lastCursorPos)
+            const tileAtPointer = currentPuzzle.getTileAt(lastCursorPos)
+            if ((!tileAtPointer.locked && currentTime >= this.startTimestamp + 0.2) || tileAtPointer.locked) {
+              if (currentPuzzle.toggleLockedAt(lastCursorPos)) {
+                playSample(LockSound)
+              }
+            } else {
+              this.eraseAt(lastCursorPos)
+            }
             fsm.setState(DEFAULT_STATE)
           } else {
             const { x, y } = this.getTilePosAtPointer()
@@ -125,12 +178,18 @@ export class Selector {
 
       [ERASING_STATE]: {
         enter: () => {
-          const currentCursorPos = this.getTilePosAtPointer()
-
           this.eraseAt(lastCursorPos)
-          this.eraseAt(currentCursorPos)
 
-          lastCursorPos = currentCursorPos
+          this.brush = new Brush(lastCursorPos, (pos) => {
+            if (this.selectedId === -1 || currentPuzzle.getIdAt(pos) === this.selectedId) {
+              this.eraseAt(pos)
+              return true
+            } else {
+              return false
+            }
+          })
+
+          this.brush.handlePos(this.getTilePosAtPointer())
         },
 
         execute: () => {
@@ -139,15 +198,7 @@ export class Selector {
             return
           }
 
-          const currentCursorPos = this.getTilePosAtPointer()
-          const idAtCursor = this.getIdAtPointer()
-          if (
-            (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y) &&
-            (idAtCursor === this.selectedId || idAtCursor === -1 || this.selectedId === -1)
-          ) {
-            this.eraseAt(currentCursorPos)
-            lastCursorPos = currentCursorPos
-          }
+          this.brush.handlePos(this.getTilePosAtPointer())
         },
 
         leave: () => {
@@ -157,8 +208,12 @@ export class Selector {
 
       [DRAWING_STATE]: {
         enter: () => {
-          const currentPos = this.getTilePosAtPointer()
-          this.drawAt(currentPos)
+          this.brush = new Brush(lastCursorPos, (pos) => {
+            this.drawAt(pos)
+            return currentPuzzle.getIdAt(pos) === this.selectedId
+          })
+
+          this.brush.handlePos(this.getTilePosAtPointer())
         },
 
         execute: () => {
@@ -167,21 +222,7 @@ export class Selector {
             return
           }
 
-          const currentCursorPos = this.getTilePosAtPointer()
-          const idAtCursor = currentPuzzle.getIdAt(currentCursorPos)
-
-          if (preventAccidentalDraw && idAtCursor === this.selectedId) {
-            preventAccidentalDraw = false
-          }
-
-          if (!preventAccidentalDraw && (currentCursorPos.x !== lastCursorPos.x || currentCursorPos.y !== lastCursorPos.y)) {
-            this.drawAt(currentCursorPos)
-            lastCursorPos = currentCursorPos
-
-            if (idAtCursor !== this.selectedId) {
-              preventAccidentalDraw = true
-            }
-          }
+          this.brush.handlePos(this.getTilePosAtPointer())
         },
 
         leave: () => {
@@ -331,7 +372,7 @@ export class Selector {
         for (let iy = -1; iy <= 1; iy++) {
           this.addCursorAt(
             {
-              x:  opposite.x + ix * currentPuzzle.width,
+              x: opposite.x + ix * currentPuzzle.width,
               y: opposite.y + iy * currentPuzzle.height
             },
             expected
@@ -390,7 +431,7 @@ export class Selector {
   render () {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
     SelectorShader.use({
-      [U_TIME]: performance.now() / 1000,
+      [U_TIME]: currentTime,
       [U_VARIANT]: 1
     })
     for (const cursor of Object.values(this.validCursors)) {

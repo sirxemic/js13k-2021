@@ -6,11 +6,13 @@ import createMainSong from './Audio/MainSong.js'
 import createVictorySong from './Audio/VictorySong.js'
 import { createErrorSound } from './Audio/Samples/Error.js'
 import { createPlaceSound } from './Audio/Samples/Place.js'
+import { createLockSound } from './Audio/Samples/Lock.js'
 
 export let MainSong
 export let VictorySong
 export let ErrorSound
 export let PlaceSound
+export let LockSound
 
 export let StarFieldTexture
 
@@ -26,6 +28,7 @@ export async function loadAssets () {
 
   ErrorSound = createAudioBuffer(await createErrorSound())
   PlaceSound = createAudioBuffer(await createPlaceSound())
+  LockSound = createAudioBuffer(await createLockSound())
 
   createReverb()
 

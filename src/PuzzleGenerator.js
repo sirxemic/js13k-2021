@@ -73,7 +73,7 @@ class PuzzleGeneratorPass {
   addGalaxy () {
     const id = this.galaxies.length
 
-    const limit = Math.floor(2 * Math.sqrt(this.width * this.height))
+    const limit = Math.floor(2 * Math.sqrt(this.width * this.height)) * (this.wrapping ? 0.95 : 1)
     const maxSize = 3 + Math.round(Math.random() * (limit - 3))
 
     const centerString = pickRandomFromArray([...this.availableCenterPositions])
@@ -366,12 +366,20 @@ export class PuzzleGenerator {
 
   generate () {
     let pass
+    let bestPass
 
-    do {
+    for (let i = 0; i < 50; i++) {
       pass = new PuzzleGeneratorPass(this.width, this.height, this.wrapping)
       pass.generate()
-    } while (!this.matchesDifficulty(pass))
-    return new Puzzle(this.width, this.height, pass.galaxies, this.wrapping)
+      const diffDiff = this.matchesDifficulty(pass)
+      if (diffDiff === 0) {
+        bestPass = pass
+        break
+      } else if (!bestPass || diffDiff === -1) {
+        bestPass = pass
+      }
+    }
+    return new Puzzle(this.width, this.height, bestPass.galaxies, this.wrapping)
   }
 
   matchesDifficulty (pass) {
@@ -386,8 +394,11 @@ export class PuzzleGenerator {
     }
     const minimum = this.difficulty === 0 ? 3 : 5
     const maximum = Math.sqrt(this.width * this.height) - 1
-    if (expandableGalaxyCount < minimum || expandableGalaxyCount > maximum) {
-      return false
+    if (expandableGalaxyCount < minimum) {
+      return -1 // Too easy
+    }
+    if (expandableGalaxyCount > maximum) {
+      return 1 // Too hard
     }
 
     // Check if a cell can only be part of one galaxy
@@ -435,11 +446,6 @@ export class PuzzleGenerator {
       }
     }
 
-    if (this.difficulty === 0) {
-      return trivialGalaxyCount >= galaxies.length * 0.5
-    } else {
-      return (trivialGalaxyCount > galaxies.length * 0.1 || trivialCells.size > Math.sqrt(this.width * this.height)) &&
-        (trivialGalaxyCount <= galaxies.length * 0.5)
-    }
+    return trivialGalaxyCount >= galaxies.length * 0.5 ? 0 : 1
   }
 }
