@@ -18,9 +18,10 @@ void main() {
 
 export const fragmentShader = `/*glsl*/
 uniform float ${U_TIME};
+uniform float ${U_VARIANT};
 varying vec3 vp;
 void main() {
-  float ts = ${U_TIME};
+  float ts = ${U_TIME} * (${U_VARIANT} + 1.0);
   float x = abs(2.*fract(.5 * vp.x + ts)-1.);
   float y = abs(2.*fract(.5 * vp.y + 0.33 + ts)-1.);
   float z = abs(2.*fract(.5 * vp.z + 0.66 + ts)-1.);

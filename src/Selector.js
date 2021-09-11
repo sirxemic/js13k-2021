@@ -152,15 +152,15 @@ export class Selector {
             }
             fsm.setState(DEFAULT_STATE)
           } else {
-            const { x, y } = this.getTilePosAtPointer()
+            const pos = this.getTilePosAtPointer()
 
             // Check the ID when moving over a second tile to determine the action
-            if (x !== lastCursorPos.x || y !== lastCursorPos.y) {
+            if (pos.x !== lastCursorPos.x || pos.y !== lastCursorPos.y) {
               if (this.selectedId === -1) {
                 fsm.setState(ERASING_STATE)
               } else {
-                const secondId = this.getIdAtPointer()
-                if (secondId !== this.selectedId) {
+                const secondId = currentPuzzle.getIdAt(pos)
+                if (secondId !== this.selectedId || currentPuzzle.isCenter(pos)) {
                   fsm.setState(DRAWING_STATE)
                 } else {
                   fsm.setState(ERASING_STATE)
@@ -432,7 +432,7 @@ export class Selector {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
     SelectorShader.use({
       [U_TIME]: currentTime,
-      [U_VARIANT]: 1
+      [U_VARIANT]: 0
     })
     for (const cursor of Object.values(this.validCursors)) {
       cursor.render()
@@ -442,7 +442,9 @@ export class Selector {
   renderPass2 () {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT)
-    SelectorShader.use()
+    SelectorShader.use({
+      [U_VARIANT]: 1
+    })
     for (const cursor of Object.values(this.invalidCursors)) {
       cursor.render()
     }
