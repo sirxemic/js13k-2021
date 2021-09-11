@@ -1,3 +1,4 @@
+import { Board } from './Board.js'
 import { Vector4 } from './Math/Vector4.js'
 import { shuffle } from './utils.js'
 
@@ -27,24 +28,26 @@ export class Puzzle {
       0, 1, 2, 3, 4, 5
     ])
 
-    this.setCenterTiles()
-
     this.reset()
   }
 
   reset () {
-    this.tiles = Array.from(
-      { length: this.width * this.height },
-      (_, index) => {
-        const x = index % this.width
-        const y = Math.floor(index / this.width)
-        return { x, y, id: EMPTY, locked: false }
-      }
-    )
+    this.board = new Board(this.width, this.height, this.wrapping)
+    this.grid = this.board.grid
 
-    this.centerTiles.forEach(tile => {
-      this.tiles[tile.x + tile.y * this.width] = tile
+    for (const center of this.centers) {
+      this.board.addGalaxyAt(center)
+    }
+
+    this.centerTiles = []
+    this.board.galaxies.forEach(galaxy => {
+      this.centerTiles.push(...galaxy.centerCells)
     })
+
+    this.locks = new Map()
+    for (const cell of this.board.grid) {
+      this.locks.set(cell, false)
+    }
 
     this.updateConnections()
   }
@@ -52,7 +55,7 @@ export class Puzzle {
   solve () {
     this.solution.forEach((galaxy, index) => {
       for (const cell of galaxy.cells) {
-        this.tiles[cell.x + cell.y * this.width].id = index
+        this.board.setAt(cell, index)
       }
     })
 
@@ -60,8 +63,8 @@ export class Puzzle {
   }
 
   isSolved () {
-    for (const tile of this.tiles) {
-      if (tile.id === EMPTY) {
+    for (const cell of this.board.grid) {
+      if (cell.id === -1) {
         return false
       }
     }
@@ -70,129 +73,59 @@ export class Puzzle {
   }
 
   toggleLockedAt (pos) {
-    const tile = this.getTileAt(pos)
-    if (tile.id === EMPTY || this.isCenter(pos)) {
+    const cell = this.getTileAt(pos)
+    if (!cell || cell.id === -1 || this.isCenter(pos)) {
       return false
     }
-    const newLocked = !tile.locked
-    const opposite = this.getOpposite(pos, tile.id)
-    const oppositeTile = this.getTileAt(opposite)
-    tile.locked = oppositeTile.locked = newLocked
+    const oppositeCell = this.board.getOppositeCellFromId(pos, cell.id)
+    const newLock = !this.locks.get(cell)
+    this.locks.set(cell, newLock)
+    this.locks.set(oppositeCell, newLock)
     return true
   }
 
   setSymmetricallyAt (pos, id) {
-    const tile = this.getTileAt(pos)
+    const cell = this.getTileAt(pos)
 
-    if (tile.id === id) {
+    if (cell.id === id) {
       return false
     }
 
-    if (tile.locked) {
+    // Get the cells and their IDs that are about to be changed
+    const oppositeCell = this.board.getOppositeCellFromId(pos, id)
+
+    if (this.locks.get(cell) || !oppositeCell || this.locks.get(oppositeCell)) {
       return false
     }
 
-    const opposite = this.getOpposite(pos, id)
-
-    // When not wrapping, the opposite can be outside of the board
-    if (this.getIdAt(opposite) === INVALID_POS) {
-      return false
-    }
-
-    if (this.isCenter(pos) || this.isCenter(opposite) || this.getTileAt(opposite).locked) {
-      return false
-    }
-
-    let oldId = this.getIdAt(pos)
-    if (oldId > -1 && oldId !== id) {
-      const opposite2 = this.getOpposite(pos, oldId)
-      if (this.canUnsetAt(opposite2)) {
-        this.setAt(opposite2, EMPTY)
-      }
-    }
-
-    oldId = this.getIdAt(opposite)
-    if (oldId > -1 && oldId !== id) {
-      const oppositeOpposite = this.getOpposite(opposite, oldId)
-      if (this.canUnsetAt(oppositeOpposite)) {
-        this.setAt(oppositeOpposite, EMPTY)
-      }
-    }
-
-    this.setAt(pos, id)
-    this.setAt(opposite, id)
+    const result = this.board.setSymmetricallyAt(pos, id, true)
 
     this.updateConnections()
 
-    return true
+    return result
   }
 
   unsetSymmetricallyAt (pos) {
-    const { id, locked } = this.getTileAt(pos)
+    const cell = this.getTileAt(pos)
 
-    if (id < 0 || !this.canUnsetAt(pos) || locked) {
+    if (cell.id === -1 || !this.canUnsetAt(pos) || this.locks.get(cell)) {
       return false
     }
 
-    this.setAt(pos, EMPTY)
-
-    const opposite = this.getOpposite(pos, id)
-
-    // If the cell at pos can be unset, the opposite has to be unsettable as well
-    //if (this.canUnsetAt(opposite)) {
-      this.setAt(opposite, EMPTY)
-    //}
+    this.board.unsetSymmetricallyAt(pos)
 
     this.updateConnections()
 
     return true
   }
 
-  getTileAt ({ x, y }) {
-    if (!this.wrapping) {
-      if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
-        return null
-      }
-      return this.tiles[x + y * this.width]
-    }
-    if (x < 0) x %= this.width
-    x = (x + this.width) % this.width
-    if (y < 0) y %= this.height
-    y = (y + this.height) % this.height
-    return this.tiles[x + y * this.width]
-  }
-
   getIdAt (pos) {
-    const tile = this.getTileAt(pos)
-    return tile ? tile.id : INVALID_POS
+    const cell = this.getTileAt(pos)
+    return cell ? cell.id : INVALID_POS
   }
 
-  setCenterTiles () {
-    this.centerTiles = []
-    this.centers.forEach(({ x, y }, id) => {
-      x -= 0.5
-      y -= 0.5
-      if (x % 1 === 0 && y % 1 === 0) {
-        this.centerTiles.push({ x, y, id })
-      } else if (x % 1 === 0 && y % 1 !== 0) {
-        this.centerTiles.push({ x, y: (y - 0.5 + this.height) % this.height , id })
-        this.centerTiles.push({ x, y: (y + 0.5) % this.height, id })
-      } else if (x % 1 !== 0 && y % 1 === 0) {
-        this.centerTiles.push({ x: (x - 0.5 + this.width) % this.width, y, id })
-        this.centerTiles.push({ x: (x + 0.5) % this.width, y, id })
-      } else {
-        this.centerTiles.push({ x: (x - 0.5 + this.width) % this.width, y: (y - 0.5 + this.height) % this.height, id })
-        this.centerTiles.push({ x: (x + 0.5) % this.width, y: (y - 0.5 + this.height) % this.height, id })
-        this.centerTiles.push({ x: (x - 0.5 + this.width) % this.width, y: (y + 0.5) % this.height, id })
-        this.centerTiles.push({ x: (x + 0.5) % this.width, y: (y + 0.5) % this.height, id })
-      }
-    })
-  }
-
-  setAt (pos, id) {
-    const tile = this.getTileAt(pos)
-    tile.locked = false
-    tile.id = id
+  getTileAt (pos) {
+    return this.board.getCellAt(pos)
   }
 
   getOpposite ({ x, y }, id) {
@@ -212,8 +145,7 @@ export class Puzzle {
   }
 
   isCenter (pos) {
-    const tile = this.getTileAt(pos)
-    return this.centerTiles.includes(tile)
+    return this.board.isGalaxyCenter(pos)
   }
 
   isConnectedAt(id, pos) {
@@ -221,20 +153,14 @@ export class Puzzle {
   }
 
   updateConnections () {
-    const visited = new Set()
-    const toVisit = this.centerTiles.slice()
+    const connected = new Set()
+    const toVisit = [...this.centerTiles]
 
     while (toVisit.length > 0) {
-      const tile = toVisit.pop()
-      visited.add(tile)
-      const { x, y, id } = tile
-      ;[
-        this.getTileAt({ x: x - 1, y }),
-        this.getTileAt({ x: x + 1, y }),
-        this.getTileAt({ x, y: y - 1 }),
-        this.getTileAt({ x, y: y + 1 })
-      ].forEach(otherTile => {
-        if (otherTile && otherTile.id === id && !visited.has(otherTile)) toVisit.push(otherTile)
+      const cell = toVisit.pop()
+      connected.add(cell)
+      this.board.getNeighbouringCells(cell).forEach(neighbour => {
+        if (neighbour.id === cell.id && !connected.has(neighbour)) toVisit.push(neighbour)
       })
     }
 
@@ -242,10 +168,10 @@ export class Puzzle {
     this.connectedTileCount = 0
     this.connectionData = []
 
-    this.tiles.forEach((tile) => {
-      const { x, y, id } = tile
-      if (!visited.has(tile)) {
-        this.disconnectedTiles.add(`${tile.x}_${tile.y}`)
+    this.board.grid.forEach((cell) => {
+      const { x, y, id } = cell
+      if (!connected.has(cell)) {
+        this.disconnectedTiles.add(`${cell.x}_${cell.y}`)
       }
       else if (id > -1) {
         this.connectedTileCount++

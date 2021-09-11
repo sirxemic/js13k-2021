@@ -301,7 +301,7 @@ export class Selector {
   }
 
   getState () {
-    return currentPuzzle.tiles.map(tile => tile.id)
+    return currentPuzzle.grid.map(cell => cell.id)
   }
 
   drawAt (pos) {
@@ -338,7 +338,7 @@ export class Selector {
     }
 
     for (let i = 0; i < state.length; i++) {
-      currentPuzzle.tiles[i].id = state[i]
+      currentPuzzle.grid[i].id = state[i]
     }
     currentPuzzle.updateConnections()
   }

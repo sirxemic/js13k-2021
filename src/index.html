@@ -98,9 +98,13 @@
 
   .wrapper {
     max-width: 30em;
+    min-width: 10em;
     padding: 2em;
     border-radius: 0.5vmin;
     box-shadow: 0 0 2vmin #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   h1 {
@@ -141,10 +145,8 @@
   <div class="modal intro">
     <div class="wrapper">
       <h1>Galaxies</h1>
-      <h2>Instructions:</h2>
-      <p>Fill all empty spaces with galaxies. Sounds easy? Note that galaxies cannot overlap, and trying to do so might remove tiles of another galaxy!</p>
-      <p>Hold and release to lock a tile in place, click/tap it again to unlock it.</p>
-      <p style="text-align: center;margin-bottom:0">Click/tap anywhere to continue</p>
+      <div class="button start">Start</div>
+      <div class="button tutorial">Tutorial</div>
     </div>
   </div>
 
@@ -153,7 +155,7 @@
       <h1>Choose difficulty</h1>
       <div class="button" data-diff="[7,7,0,0]">7x7 - Easy</div>
       <div class="button" data-diff="[7,7,1,0]">7x7 - Hard</div>
-      <div class="button" data-diff="[7,7,1,1]">7x7 no border - Hard</div>
+      <div class="button" data-diff="[7,7,0,1]">7x7 no border - Hard</div>
       <div class="button" data-diff="[10,10,1,1]">10x10 no border - Hard</div>
     </div>
   </div>

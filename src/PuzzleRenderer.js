@@ -55,9 +55,9 @@ export class PuzzleRenderer {
     gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
     gl.blendFunc(gl.ONE, gl.ZERO)
-    for (let tile of currentPuzzle.tiles) {
-      if (tile.id < 0) continue
-      this.renderTileMask(tile)
+    for (let cell of currentPuzzle.grid) {
+      if (cell.id < 0) continue
+      this.renderTileMask(cell)
     }
     gl.enable(gl.DEPTH_TEST)
     RenderTarget.unbind()
@@ -123,7 +123,7 @@ export class PuzzleRenderer {
       [U_WORLD_SIZE]: new Vector2(currentPuzzle.width, currentPuzzle.height),
       [U_COLOR]: getValueFromColorId(currentPuzzle.colorIds[tile.id % currentPuzzle.colorIds.length]),
       [U_GALAXY_CENTER]: currentPuzzle.centers[tile.id],
-      [U_LOCKED]: tile.locked ? 1 : 0,
+      [U_LOCKED]: currentPuzzle.locks.get(tile) ? 1 : 0,
       [U_TILE_CONNECTION]: currentPuzzle.getShaderConnectionData(tile),
       [U_GALAXY_CONNECTION]: currentPuzzle.isTileConnectedToCenter(tile),
       [U_TIME]: currentTime
