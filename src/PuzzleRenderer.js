@@ -13,11 +13,12 @@ import {
   U_MODELMATRIX,
   U_TEXTURE,
   U_TEXTURE_STARS,
-  U_TILE_CONNECTION,
-  U_TILE_POS,
+  U_SPACE_CONNECTION,
+  U_SPACE_POS,
   U_TIME,
   U_WORLD_SIZE
 } from './Graphics/sharedLiterals.js'
+import { Grid } from './Grid.js'
 import { Matrix4 } from './Math/Matrix4.js'
 import { Vector2 } from './Math/Vector2.js'
 import { Vector3 } from './Math/Vector3.js'
@@ -43,6 +44,7 @@ export class PuzzleRenderer {
     this.mask = new RenderTarget(1024, 1024)
     this.fadeSpeed = 0.5
     this.fadeT = 0
+    this.grid = new Grid()
   }
 
   handleCancel () {
@@ -55,9 +57,9 @@ export class PuzzleRenderer {
     gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
     gl.blendFunc(gl.ONE, gl.ZERO)
-    for (let cell of currentPuzzle.grid) {
-      if (cell.id < 0) continue
-      this.renderTileMask(cell)
+    for (let space of currentPuzzle.grid) {
+      if (space.id < 0) continue
+      this.renderSpaceMask(space)
     }
     gl.enable(gl.DEPTH_TEST)
     RenderTarget.unbind()
@@ -69,6 +71,8 @@ export class PuzzleRenderer {
   }
 
   render () {
+    this.grid.render(this.fadeAmount)
+
     const { width, height } = currentPuzzle
     this.renderMask()
     gl.viewport(0, 0, TheCanvas.width, TheCanvas.height)
@@ -88,10 +92,10 @@ export class PuzzleRenderer {
       0, 0, 1, 0,
       0, 0, 0, 1
     ])
-    const currentCellPos = TheCamera.getRayGridIntersection(TheCanvas.width / 2, TheCanvas.height / 2)
+    const currentSpacePos = TheCamera.getRayGridIntersection(TheCanvas.width / 2, TheCanvas.height / 2)
 
-    currentCellPos.x = Math.floor((currentCellPos.x + 1) / (width * 2))
-    currentCellPos.y = Math.floor((currentCellPos.y + 1) / (height * 2))
+    currentSpacePos.x = Math.floor((currentSpacePos.x + 1) / (width * 2))
+    currentSpacePos.y = Math.floor((currentSpacePos.y + 1) / (height * 2))
 
     const marginH = currentPuzzle.wrapping ? 3 : 0
     const marginV = currentPuzzle.wrapping ? 2 : 0
@@ -104,8 +108,8 @@ export class PuzzleRenderer {
         PuzzleShader.use({
           [U_MODELMATRIX]: modelMatrix.setTranslation(
             new Vector3(
-              ((x + currentCellPos.x) * width + offX) * 2,
-              ((y + currentCellPos.y) * height + offY) * 2,
+              ((x + currentSpacePos.x) * width + offX) * 2,
+              ((y + currentSpacePos.y) * height + offY) * 2,
               -0.5
             )
           ),
@@ -117,15 +121,15 @@ export class PuzzleRenderer {
     gl.enable(gl.DEPTH_TEST)
   }
 
-  renderTileMask (tile) {
+  renderSpaceMask (space) {
     TileShader.use({
-      [U_TILE_POS]: new Vector2(tile.x + 0.5, tile.y + 0.5),
+      [U_SPACE_POS]: new Vector2(space.x + 0.5, space.y + 0.5),
       [U_WORLD_SIZE]: new Vector2(currentPuzzle.width, currentPuzzle.height),
-      [U_COLOR]: getValueFromColorId(currentPuzzle.colorIds[tile.id % currentPuzzle.colorIds.length]),
-      [U_GALAXY_CENTER]: currentPuzzle.centers[tile.id],
-      [U_LOCKED]: currentPuzzle.locks.get(tile) ? 1 : 0,
-      [U_TILE_CONNECTION]: currentPuzzle.getShaderConnectionData(tile),
-      [U_GALAXY_CONNECTION]: currentPuzzle.isTileConnectedToCenter(tile),
+      [U_COLOR]: getValueFromColorId(currentPuzzle.colorIds[space.id % currentPuzzle.colorIds.length]),
+      [U_GALAXY_CENTER]: currentPuzzle.centers[space.id],
+      [U_LOCKED]: currentPuzzle.isLockedAt(space) ? 1 : 0,
+      [U_SPACE_CONNECTION]: currentPuzzle.getShaderConnectionData(space),
+      [U_GALAXY_CONNECTION]: currentPuzzle.isSpaceConnectedToCenter(space),
       [U_TIME]: currentTime
     })
     Quad.draw()

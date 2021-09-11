@@ -113,7 +113,7 @@ export class Selector {
           else if (Input.usingMouse) {
             // Hover visual
             this.clearCursors()
-            const pos = this.getTilePosAtPointer()
+            const pos = this.getSpacePosAtPointer()
             const id = this.getIdAtPointer()
             this.addCursorAt(pos, id)
             if (id > -1) {
@@ -132,7 +132,7 @@ export class Selector {
           this.startTimestamp = currentTime
           this.stateBeforeDraw = this.getState()
 
-          lastCursorPos = this.getTilePosAtPointer()
+          lastCursorPos = this.getSpacePosAtPointer()
           this.selectedId = this.getIdAtPointer()
           this.addCursorAt(lastCursorPos)
           if (this.selectedId > -1) {
@@ -142,8 +142,8 @@ export class Selector {
 
         execute: () => {
           if (!Input.pointerDown) {
-            const tileAtPointer = currentPuzzle.getTileAt(lastCursorPos)
-            if ((!tileAtPointer.locked && currentTime >= this.startTimestamp + 0.2) || tileAtPointer.locked) {
+            const spaceAtPointer = currentPuzzle.getSpaceAt(lastCursorPos)
+            if ((!spaceAtPointer.locked && currentTime >= this.startTimestamp + 0.2) || currentPuzzle.isLockedAt(spaceAtPointer)) {
               if (currentPuzzle.toggleLockedAt(lastCursorPos)) {
                 playSample(LockSound)
               }
@@ -152,15 +152,15 @@ export class Selector {
             }
             fsm.setState(DEFAULT_STATE)
           } else {
-            const pos = this.getTilePosAtPointer()
+            const pos = this.getSpacePosAtPointer()
 
-            // Check the ID when moving over a second tile to determine the action
+            // Check the ID when moving over a second space to determine the action
             if (pos.x !== lastCursorPos.x || pos.y !== lastCursorPos.y) {
               if (this.selectedId === -1) {
                 fsm.setState(ERASING_STATE)
               } else {
                 const secondId = currentPuzzle.getIdAt(pos)
-                if (secondId !== this.selectedId || currentPuzzle.isCenter(pos)) {
+                if (secondId !== this.selectedId || currentPuzzle.isGalaxyCenter(pos)) {
                   fsm.setState(DRAWING_STATE)
                 } else {
                   fsm.setState(ERASING_STATE)
@@ -189,7 +189,7 @@ export class Selector {
             }
           })
 
-          this.brush.handlePos(this.getTilePosAtPointer())
+          this.brush.handlePos(this.getSpacePosAtPointer())
         },
 
         execute: () => {
@@ -198,7 +198,7 @@ export class Selector {
             return
           }
 
-          this.brush.handlePos(this.getTilePosAtPointer())
+          this.brush.handlePos(this.getSpacePosAtPointer())
         },
 
         leave: () => {
@@ -213,7 +213,7 @@ export class Selector {
             return currentPuzzle.getIdAt(pos) === this.selectedId
           })
 
-          this.brush.handlePos(this.getTilePosAtPointer())
+          this.brush.handlePos(this.getSpacePosAtPointer())
         },
 
         execute: () => {
@@ -222,7 +222,7 @@ export class Selector {
             return
           }
 
-          this.brush.handlePos(this.getTilePosAtPointer())
+          this.brush.handlePos(this.getSpacePosAtPointer())
         },
 
         leave: () => {
@@ -301,7 +301,7 @@ export class Selector {
   }
 
   getState () {
-    return currentPuzzle.grid.map(cell => cell.id)
+    return currentPuzzle.grid.map(space => space.id)
   }
 
   drawAt (pos) {
@@ -343,7 +343,7 @@ export class Selector {
     currentPuzzle.updateConnections()
   }
 
-  getTilePosAtPointer () {
+  getSpacePosAtPointer () {
     let { x, y } = TheCamera.getRayGridIntersection(Input.mouseX, Input.mouseY)
 
     x = Math.floor((x + 1) / 2)
@@ -358,11 +358,12 @@ export class Selector {
   }
 
   addCursorAtPointer (expected = this.selectedId) {
-    this.addCursorAt(this.getTilePosAtPointer(), expected)
+    this.addCursorAt(this.getSpacePosAtPointer(), expected)
   }
 
   createCursorsAtOppositeOf ({ x, y }, expected = this.selectedId) {
-    const opposite = currentPuzzle.getOpposite({ x, y }, expected)
+    const center = currentPuzzle.galaxies[expected].center
+    const opposite = currentPuzzle.getOppositePositionFrom({ x, y }, center)
 
     if (currentPuzzle.wrapping) {
       opposite.x = closestModulo(x, opposite.x, currentPuzzle.width)
@@ -406,7 +407,7 @@ export class Selector {
   }
 
   getIdAtPointer () {
-    const pos = this.getTilePosAtPointer()
+    const pos = this.getSpacePosAtPointer()
     return currentPuzzle.getIdAt(pos)
   }
 
@@ -417,8 +418,6 @@ export class Selector {
       playSample(this.soundToPlay)
       this.soundToPlay = null
     }
-
-    toggleUndo(this.canUndo())
 
     if (!this.hasBeenSolved && currentPuzzle.isSolved()) {
       this.hasBeenSolved = true

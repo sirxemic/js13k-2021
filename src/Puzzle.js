@@ -3,21 +3,19 @@ import { Vector4 } from './Math/Vector4.js'
 import { shuffle } from './utils.js'
 
 export const INVALID_POS = -2
-export const EMPTY = -1
 
-export class Puzzle {
+export class Puzzle extends Board {
   constructor (width, height, galaxies, wrapping) {
+    super(width, height, wrapping)
+
     this.solution = galaxies.map(galaxy => {
       return {
         center: galaxy.center,
-        cells: [...galaxy.cells]
+        spaces: [...galaxy.spaces]
       }
     })
 
-    this.width = width
-    this.height = height
     this.centers = galaxies.map(galaxy => galaxy.center)
-    this.wrapping = wrapping
 
     this.gridOffset = {
       x: this.width / 2 - 0.5,
@@ -32,21 +30,20 @@ export class Puzzle {
   }
 
   reset () {
-    this.board = new Board(this.width, this.height, this.wrapping)
-    this.grid = this.board.grid
+    this.init()
 
     for (const center of this.centers) {
-      this.board.addGalaxyAt(center)
+      this.addGalaxyAt(center)
     }
 
-    this.centerTiles = []
-    this.board.galaxies.forEach(galaxy => {
-      this.centerTiles.push(...galaxy.centerCells)
+    this.centerSpaces = []
+    this.galaxies.forEach(galaxy => {
+      this.centerSpaces.push(...galaxy.centerSpaces)
     })
 
     this.locks = new Map()
-    for (const cell of this.board.grid) {
-      this.locks.set(cell, false)
+    for (const space of this.grid) {
+      this.locks.set(space, false)
     }
 
     this.updateConnections()
@@ -54,8 +51,8 @@ export class Puzzle {
 
   solve () {
     this.solution.forEach((galaxy, index) => {
-      for (const cell of galaxy.cells) {
-        this.board.setAt(cell, index)
+      for (const space of galaxy.spaces) {
+        this.setAt(space, index)
       }
     })
 
@@ -63,42 +60,46 @@ export class Puzzle {
   }
 
   isSolved () {
-    for (const cell of this.board.grid) {
-      if (cell.id === -1) {
+    for (const space of this.grid) {
+      if (space.id === -1) {
         return false
       }
     }
 
-    return this.disconnectedTiles.size === 0
+    return this.disconnectedSpaces.size === 0
+  }
+
+  isLockedAt (pos) {
+    return this.locks.get(this.getSpaceAt(pos))
   }
 
   toggleLockedAt (pos) {
-    const cell = this.getTileAt(pos)
-    if (!cell || cell.id === -1 || this.isCenter(pos)) {
+    const space = this.getSpaceAt(pos)
+    if (!space || space.id === -1 || this.isGalaxyCenter(pos)) {
       return false
     }
-    const oppositeCell = this.board.getOppositeCellFromId(pos, cell.id)
-    const newLock = !this.locks.get(cell)
-    this.locks.set(cell, newLock)
-    this.locks.set(oppositeCell, newLock)
+    const oppositeSpace = this.getOppositeSpaceFromId(pos, space.id)
+    const newLock = !this.isLockedAt(pos)
+    this.locks.set(space, newLock)
+    this.locks.set(oppositeSpace, newLock)
     return true
   }
 
   setSymmetricallyAt (pos, id) {
-    const cell = this.getTileAt(pos)
+    const space = this.getSpaceAt(pos)
 
-    if (cell.id === id) {
+    if (space.id === id) {
       return false
     }
 
-    // Get the cells and their IDs that are about to be changed
-    const oppositeCell = this.board.getOppositeCellFromId(pos, id)
+    // Get the spaces and their IDs that are about to be changed
+    const oppositeSpace = this.getOppositeSpaceFromId(pos, id)
 
-    if (this.locks.get(cell) || !oppositeCell || this.locks.get(oppositeCell)) {
+    if (this.isLockedAt(space) || !oppositeSpace || this.isLockedAt(oppositeSpace)) {
       return false
     }
 
-    const result = this.board.setSymmetricallyAt(pos, id, true)
+    const result = super.setSymmetricallyAt(pos, id, true)
 
     this.updateConnections()
 
@@ -106,13 +107,13 @@ export class Puzzle {
   }
 
   unsetSymmetricallyAt (pos) {
-    const cell = this.getTileAt(pos)
+    const space = this.getSpaceAt(pos)
 
-    if (cell.id === -1 || !this.canUnsetAt(pos) || this.locks.get(cell)) {
+    if (space.id === -1 || !this.canUnsetAt(pos) || this.isLockedAt(space)) {
       return false
     }
 
-    this.board.unsetSymmetricallyAt(pos)
+    super.unsetSymmetricallyAt(pos)
 
     this.updateConnections()
 
@@ -120,32 +121,16 @@ export class Puzzle {
   }
 
   getIdAt (pos) {
-    const cell = this.getTileAt(pos)
-    return cell ? cell.id : INVALID_POS
-  }
-
-  getTileAt (pos) {
-    return this.board.getCellAt(pos)
-  }
-
-  getOpposite ({ x, y }, id) {
-    const center = this.centers[id]
-    return {
-      x: 2 * center.x - x - 1,
-      y: 2 * center.y - y - 1
-    }
+    const space = this.getSpaceAt(pos)
+    return space ? space.id : INVALID_POS
   }
 
   canUnsetAt (pos) {
-    if (this.isCenter(pos)) {
+    if (this.isGalaxyCenter(pos)) {
       return false
     }
 
-    return this.getIdAt(pos) !== INVALID_POS
-  }
-
-  isCenter (pos) {
-    return this.board.isGalaxyCenter(pos)
+    return this.getSpaceAt(pos) !== null
   }
 
   isConnectedAt(id, pos) {
@@ -154,46 +139,46 @@ export class Puzzle {
 
   updateConnections () {
     const connected = new Set()
-    const toVisit = [...this.centerTiles]
+    const toVisit = [...this.centerSpaces]
 
     while (toVisit.length > 0) {
-      const cell = toVisit.pop()
-      connected.add(cell)
-      this.board.getNeighbouringCells(cell).forEach(neighbour => {
-        if (neighbour.id === cell.id && !connected.has(neighbour)) toVisit.push(neighbour)
+      const space = toVisit.pop()
+      connected.add(space)
+      this.getNeighbouringSpaces(space).forEach(neighbour => {
+        if (neighbour.id === space.id && !connected.has(neighbour)) toVisit.push(neighbour)
       })
     }
 
-    this.disconnectedTiles = new Set()
-    this.connectedTileCount = 0
+    this.disconnectedSpaces = new Set()
+    this.connectedSpaceCount = 0
     this.connectionData = []
 
-    this.board.grid.forEach((cell) => {
-      const { x, y, id } = cell
-      if (!connected.has(cell)) {
-        this.disconnectedTiles.add(`${cell.x}_${cell.y}`)
+    this.grid.forEach((space) => {
+      const { x, y, id } = space
+      if (!connected.has(space)) {
+        this.disconnectedSpaces.add(`${space.x}_${space.y}`)
       }
       else if (id > -1) {
-        this.connectedTileCount++
+        this.connectedSpaceCount++
       }
-      const tileLeft = this.isConnectedAt(id, { x: x - 1, y })
-      const tileRight = this.isConnectedAt(id, { x: x + 1, y })
-      const tileDown = this.isConnectedAt(id, { x, y: y - 1 })
-      const tileUp = this.isConnectedAt(id, { x, y: y + 1 })
-      const tileUpLeft = tileLeft && tileUp && this.isConnectedAt(id, { x: x - 1, y: y + 1 })
-      const tileUpRight = tileRight && tileUp && this.isConnectedAt(id, { x: x + 1, y: y + 1 })
-      const tileDownLeft = tileLeft && tileDown && this.isConnectedAt(id, { x: x - 1, y: y - 1 })
-      const tileDownRight = tileRight && tileDown && this.isConnectedAt(id, { x: x + 1, y: y - 1 })
+      const spaceLeft = this.isConnectedAt(id, { x: x - 1, y })
+      const spaceRight = this.isConnectedAt(id, { x: x + 1, y })
+      const spaceDown = this.isConnectedAt(id, { x, y: y - 1 })
+      const spaceUp = this.isConnectedAt(id, { x, y: y + 1 })
+      const spaceUpLeft = spaceLeft && spaceUp && this.isConnectedAt(id, { x: x - 1, y: y + 1 })
+      const spaceUpRight = spaceRight && spaceUp && this.isConnectedAt(id, { x: x + 1, y: y + 1 })
+      const spaceDownLeft = spaceLeft && spaceDown && this.isConnectedAt(id, { x: x - 1, y: y - 1 })
+      const spaceDownRight = spaceRight && spaceDown && this.isConnectedAt(id, { x: x + 1, y: y - 1 })
 
-      let h = tileLeft && tileRight ? 2 : tileLeft ? -1 : tileRight ? 1 : 0
-      let v = tileUp && tileDown ? 2 : tileDown ? -1 : tileUp ? 1 : 0
+      let h = spaceLeft && spaceRight ? 2 : spaceLeft ? -1 : spaceRight ? 1 : 0
+      let v = spaceUp && spaceDown ? 2 : spaceDown ? -1 : spaceUp ? 1 : 0
 
       this.connectionData.push(
           new Vector4(
           h,
           v,
-          tileUpRight && tileDownLeft ? 2 : tileUpRight ? 1 : tileDownLeft ? -1 : 0,
-          tileUpLeft && tileDownRight ? 2 : tileUpLeft ? 1 : tileDownRight ? -1 : 0
+          spaceUpRight && spaceDownLeft ? 2 : spaceUpRight ? 1 : spaceDownLeft ? -1 : 0,
+          spaceUpLeft && spaceDownRight ? 2 : spaceUpLeft ? 1 : spaceDownRight ? -1 : 0
         )
       )
     })
@@ -203,7 +188,7 @@ export class Puzzle {
     return this.connectionData[x + y * this.width]
   }
 
-  isTileConnectedToCenter ({ x, y }) {
-    return !this.disconnectedTiles.has(`${x}_${y}`)
+  isSpaceConnectedToCenter ({ x, y }) {
+    return !this.disconnectedSpaces.has(`${x}_${y}`)
   }
 }

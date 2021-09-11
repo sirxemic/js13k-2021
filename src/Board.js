@@ -7,10 +7,10 @@ export class Board {
     this.wrapping = wrapping
     this.galaxies = []
 
-    this.reset()
+    this.init()
   }
 
-  reset () {
+  init () {
     this.grid = []
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
@@ -22,32 +22,32 @@ export class Board {
   addGalaxyAt ({ x, y }) {
     const center = new Vector2(x, y)
     const id = this.galaxies.length
-    const centerCells = this.getTouchingCells(center)
+    const centerSpaces = this.getTouchingSpaces(center)
 
-    if (centerCells.some(cell => cell.id !== -1)) {
+    if (centerSpaces.some(space => space.id !== -1)) {
       return null
     }
 
     const galaxy = {
       center,
       id,
-      centerCells: new Set(centerCells),
-      cells: new Set(centerCells)
+      centerSpaces: new Set(centerSpaces),
+      spaces: new Set(centerSpaces)
     }
     this.galaxies.push(galaxy)
 
-    centerCells.forEach(cell => this.setAt(cell, id))
+    centerSpaces.forEach(space => this.setAt(space, id))
 
     return galaxy
   }
 
   isGalaxyCenter (pos) {
-    const cell = this.getCellAt(pos)
-    if (cell.id === -1) return false
-    return this.galaxies[cell.id].centerCells.has(cell)
+    const space = this.getSpaceAt(pos)
+    if (space.id === -1) return false
+    return this.galaxies[space.id].centerSpaces.has(space)
   }
 
-  getCellAt ({ x, y }) {
+  getSpaceAt ({ x, y }) {
     if (this.wrapping) {
       x %= this.width
       y %= this.height
@@ -72,28 +72,28 @@ export class Board {
     }
   }
 
-  getOppositeCellFrom (pos, center) {
-    return this.getCellAt(this.getOppositePositionFrom(pos, center))
+  getOppositeSpaceFrom (pos, center) {
+    return this.getSpaceAt(this.getOppositePositionFrom(pos, center))
   }
 
-  getOppositeCellFromId (pos, id) {
+  getOppositeSpaceFromId (pos, id) {
     const center = this.galaxies[id].center
-    return this.getCellAt(this.getOppositePositionFrom(pos, center))
+    return this.getSpaceAt(this.getOppositePositionFrom(pos, center))
   }
 
-  getNeighbouringCells ({ x, y }) {
+  getNeighbouringSpaces ({ x, y }) {
     return [
-      this.getCellAt({ x, y: y - 1 }),
-      this.getCellAt({ x: x - 1, y }),
-      this.getCellAt({ x: x + 1, y }),
-      this.getCellAt({ x, y: y + 1})
+      this.getSpaceAt({ x, y: y - 1 }),
+      this.getSpaceAt({ x: x - 1, y }),
+      this.getSpaceAt({ x: x + 1, y }),
+      this.getSpaceAt({ x, y: y + 1})
     ].filter(x => x)
   }
 
-  getNeighboursForMultiple (cells) {
+  getNeighboursForMultiple (spaces) {
     const result = new Set()
-    for (const cell of cells) {
-      for (const neighbour of this.getNeighbouringCells(cell)) {
+    for (const space of spaces) {
+      for (const neighbour of this.getNeighbouringSpaces(space)) {
         result.add(neighbour)
       }
     }
@@ -101,40 +101,40 @@ export class Board {
     return [...result]
   }
 
-  getTouchingCells ({ x, y }) {
+  getTouchingSpaces ({ x, y }) {
     if (x % 1 === 0.5 && y % 1 === 0.5) {
       return [
-        this.getCellAt({ x: x - 0.5, y: y - 0.5 })
+        this.getSpaceAt({ x: x - 0.5, y: y - 0.5 })
       ]
     }
 
     if (x % 1 === 0.5) {
       return [
-        this.getCellAt({ x: x - 0.5, y: y - 1 }),
-        this.getCellAt({ x: x - 0.5, y })
+        this.getSpaceAt({ x: x - 0.5, y: y - 1 }),
+        this.getSpaceAt({ x: x - 0.5, y })
       ]
     }
 
     if (y % 1 === 0.5) {
       return [
-        this.getCellAt({ x: x - 1, y: y - 0.5 }),
-        this.getCellAt({ x, y: y - 0.5 })
+        this.getSpaceAt({ x: x - 1, y: y - 0.5 }),
+        this.getSpaceAt({ x, y: y - 0.5 })
       ]
     }
 
     return [
-      this.getCellAt({ x: x - 1, y: y - 1 }),
-      this.getCellAt({ x: x, y: y - 1 }),
-      this.getCellAt({ x: x - 1, y }),
-      this.getCellAt({ x: x, y })
+      this.getSpaceAt({ x: x - 1, y: y - 1 }),
+      this.getSpaceAt({ x: x, y: y - 1 }),
+      this.getSpaceAt({ x: x - 1, y }),
+      this.getSpaceAt({ x: x, y })
     ]
   }
 
   setSymmetricallyAt (pos, id, override = false) {
-    const cell = this.getCellAt(pos)
-    const opposite = this.getOppositeCellFromId(pos, id)
+    const space = this.getSpaceAt(pos)
+    const opposite = this.getOppositeSpaceFromId(pos, id)
 
-    if (!cell || !opposite) {
+    if (!space || !opposite) {
       return false
     }
 
@@ -143,48 +143,48 @@ export class Board {
       if (galaxy.id === id) {
         continue
       }
-      if (galaxy.centerCells.has(cell) || galaxy.centerCells.has(opposite)) {
+      if (galaxy.centerSpaces.has(space) || galaxy.centerSpaces.has(opposite)) {
         return false
       }
     }
 
-    if ((cell.id !== -1 && cell.id !== id) || (opposite.id !== -1 && opposite.id !== id)) {
+    if ((space.id !== -1 && space.id !== id) || (opposite.id !== -1 && opposite.id !== id)) {
       if (!override) {
         return false
       } else {
-        // Unset cells that are already part of a galaxy
-        this.unsetSymmetricallyAt(cell)
+        // Unset spaces that are already part of a galaxy
+        this.unsetSymmetricallyAt(space)
         this.unsetSymmetricallyAt(opposite)
       }
     }
 
-    this.setAt(cell, id)
+    this.setAt(space, id)
     this.setAt(opposite, id)
 
     return true
   }
 
   unsetSymmetricallyAt (pos) {
-    const cell = this.getCellAt(pos)
-    const id = cell.id
-    if (!cell || cell.id === -1) {
+    const space = this.getSpaceAt(pos)
+    const id = space.id
+    if (!space || space.id === -1) {
       return false
     }
     const center = this.galaxies[id].center
-    const opposite = this.getOppositeCellFrom(pos, center)
+    const opposite = this.getOppositeSpaceFrom(pos, center)
 
-    cell.id = -1
+    space.id = -1
     opposite.id = -1
-    this.galaxies[id].cells.delete(cell)
-    this.galaxies[id].cells.delete(opposite)
+    this.galaxies[id].spaces.delete(space)
+    this.galaxies[id].spaces.delete(opposite)
 
     return true
   }
 
   setAt (pos, id) {
-    const cell = this.getCellAt(pos)
-    cell.id = id
-    this.galaxies[id].cells.add(cell)
+    const space = this.getSpaceAt(pos)
+    space.id = id
+    this.galaxies[id].spaces.add(space)
   }
 
   // <dev-only>
@@ -193,7 +193,7 @@ export class Board {
     const mapping = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     for (let y = this.height - 1; y >= 0; y--) {
       for (let x = 0; x < this.width; x++) {
-        const id = this.getCellAt({ x, y }).id
+        const id = this.getSpaceAt({ x, y }).id
         s += mapping[id === -1 ? ' ' : id % mapping.length]
       }
       s += '\n'

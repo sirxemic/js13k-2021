@@ -1,17 +1,36 @@
 import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
 import { delta, setCurrentPuzzle, setDelta, updateTime } from './globals.js'
-import { bindDifficultySelect, bindIntroDismiss, bindNewGame, bindRestart, bindSolve, bindUndo, hideButtons, hideCongratulations, showButtons, start, toggleUndo, updateDifficultyButton } from './UI.js'
+import {
+  bindDifficultySelect,
+  bindStart,
+  bindNewGame,
+  bindRestart,
+  bindSolve,
+  bindUndo,
+  bindTutorial,
+  bindTutorialEnd,
+
+  hideButtons,
+  hideCongratulations,
+  showButtons,
+  toggleUndo,
+  updateDifficultyButton,
+
+  start,
+  showTutorial
+} from './UI.js'
 import { clamp } from './utils.js'
 import { loadAssets, MainSong } from './Assets.js'
 import { loadProgress } from './Progress.js'
 import { PuzzleRenderer } from './PuzzleRenderer.js'
-import { Grid } from './Grid.js'
 import { Selector } from './Selector.js'
 import { StarsLayer } from './StarsLayer.js'
 import { FSM } from './FSM.js'
 import { PuzzleGenerator } from './PuzzleGenerator.js'
 import { TheAudioContext } from './Audio/Context.js'
+import { Puzzle } from './Puzzle.js'
+import { Vector2 } from './Math/Vector2.js'
 
 function resizeCanvas () {
   TheCanvas.width = window.innerWidth
@@ -26,7 +45,6 @@ loadProgress()
 /**
  * Global graphics
  */
-const grid = new Grid()
 const bg = new StarsLayer(-2)
 const fg = new StarsLayer(5)
 
@@ -42,13 +60,21 @@ const INTRO = 1
 const PUZZLE_FADE_IN = 2
 const PUZZLE_STATE = 3
 const PUZZLE_FADE_OUT = 4
-const PUZZLE_SOLVED = 5
+const TUTORIAL_FADE = 5
+const TUTORIAL = 6
 
 let puzzleSettings = {
   width: 7,
   height: 7,
   difficulty: 0,
   wrapping: false
+}
+
+async function playMusic () {
+  await TheAudioContext.resume()
+  if (!MainSong.playing) {
+    MainSong.play()
+  }
 }
 
 const mainFSM = new FSM({
@@ -59,13 +85,20 @@ const mainFSM = new FSM({
       renderer = new PuzzleRenderer()
       TheCamera.reset()
 
-      bindIntroDismiss(async () => {
-        await TheAudioContext.resume()
-        if (!MainSong.playing) {
-          MainSong.play()
-        }
-
+      bindStart(() => {
+        playMusic()
         mainFSM.setState(PUZZLE_STATE)
+      })
+
+      bindTutorial(() => {
+        if (mainFSM.activeState !== TUTORIAL) {
+          playMusic()
+          mainFSM.setState(TUTORIAL_FADE)
+        }
+      })
+
+      bindTutorialEnd(() => {
+        mainFSM.setState(PUZZLE_FADE_OUT)
       })
 
       bindDifficultySelect((settings) => {
@@ -91,6 +124,47 @@ const mainFSM = new FSM({
       })
 
       start()
+    }
+  },
+
+  [TUTORIAL_FADE]: {
+    enter () {
+      transitionTime = 0
+      renderer.handleCancel()
+    },
+
+    execute () {
+      transitionTime += delta
+      if (transitionTime >= 0.5) {
+        mainFSM.setState(TUTORIAL)
+      }
+    }
+  },
+
+  [TUTORIAL]: {
+    enter () {
+      showTutorial()
+
+      const puzzle = new Puzzle(5, 5, [
+        { center: new Vector2(1, 0.5), spaces: [] },
+        { center: new Vector2(2, 1.5), spaces: [] },
+        { center: new Vector2(4, 0.5), spaces: [] },
+        { center: new Vector2(4.5, 2.5), spaces: [] },
+        { center: new Vector2(0.5, 2.5), spaces: [] },
+        { center: new Vector2(2, 3.5), spaces: [] },
+        { center: new Vector2(3.5, 4.5), spaces: [] }
+      ], false)
+      puzzle.setSymmetricallyAt({ x: 0, y: 1 }, 1)
+      puzzle.setSymmetricallyAt({ x: 1, y: 2 }, 1)
+      setCurrentPuzzle(puzzle)
+      renderer = new PuzzleRenderer()
+      selector = new Selector()
+      TheCamera.reset()
+      TheCamera.y = 2
+    },
+
+    execute () {
+
     }
   },
 
@@ -151,6 +225,9 @@ function step () {
   TheCamera.step()
   if (selector) { // closure compiler doesn't like the ?. operator here and in render :(
     selector.step()
+    if (mainFSM.activeState === PUZZLE_STATE) {
+      toggleUndo(selector.canUndo())
+    }
   }
   renderer.step()
 }
@@ -161,7 +238,6 @@ function render () {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   bg.render()
-  grid.render()
   if (selector) {
     selector.render()
   }

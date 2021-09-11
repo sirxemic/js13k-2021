@@ -1,21 +1,21 @@
-import { ATTR_POSITION, U_COLOR, U_GALAXY_CENTER, U_GALAXY_CONNECTION, U_LOCKED, U_TILE_CONNECTION, U_TILE_POS, U_TIME, U_WORLD_SIZE } from '../Graphics/sharedLiterals.js'
+import { ATTR_POSITION, U_COLOR, U_GALAXY_CENTER, U_GALAXY_CONNECTION, U_LOCKED, U_SPACE_CONNECTION, U_SPACE_POS, U_TIME, U_WORLD_SIZE } from '../Graphics/sharedLiterals.js'
 import { ShaderProgram } from '../Graphics/ShaderProgram.js'
 
 export const vertexShader = `/*glsl*/
-uniform vec2 ${U_TILE_POS};
+uniform vec2 ${U_SPACE_POS};
 uniform vec2 ${U_WORLD_SIZE};
 varying vec2 vp; // position
 varying vec2 wp; // worldPos
 
 void main() {
   vp = ${ATTR_POSITION}.xy;
-  wp = ${ATTR_POSITION}.xy * 0.5 + ${U_TILE_POS};
+  wp = ${ATTR_POSITION}.xy * 0.5 + ${U_SPACE_POS};
   gl_Position = vec4((wp * 2.0) / ${U_WORLD_SIZE} - 1.0, 0.0, 1.0);
 }
 `
 
 export const fragmentShader = `/*glsl*/
-uniform vec4 ${U_TILE_CONNECTION};
+uniform vec4 ${U_SPACE_CONNECTION};
 uniform vec2 ${U_GALAXY_CENTER};
 uniform vec2 ${U_WORLD_SIZE};
 uniform float ${U_COLOR};
@@ -43,7 +43,7 @@ float getMask(vec2 pos, float h, float v, float d) {
 }
 
 void main() {
-  vec4 t = ${U_TILE_CONNECTION};
+  vec4 t = ${U_SPACE_CONNECTION};
 
   float cL = t.x > 1.5 ? 1.0 : -t.x;
   float cR = t.x;

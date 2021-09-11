@@ -3,7 +3,7 @@ import {
   U_VIEWMATRIX,
   U_PROJECTIONMATRIX,
   ATTR_POSITION,
-  U_TEXTURE_STARS
+  U_FADE_AMOUNT
 } from '../Graphics/sharedLiterals.js'
 import { ShaderProgram } from '../Graphics/ShaderProgram.js'
 
@@ -18,6 +18,7 @@ void main() {
 `
 
 export const fragmentShader = `/*glsl*/
+uniform float ${U_FADE_AMOUNT};
 varying vec3 vp;
 
 void main() {
@@ -26,7 +27,7 @@ void main() {
   float y = abs(2.*fract(.5 * p.y)-1.);
 
   float g = smoothstep(0.2, 0.4, sqrt(pow(x, 16.0) + pow(y, 16.0)) * 2.0 - 1.0);
-  gl_FragColor = vec4(vec3(1.0), g * 0.05);
+  gl_FragColor = vec4(vec3(1.0), g * 0.08 * (1.0 - ${U_FADE_AMOUNT}));
 }
 `
 

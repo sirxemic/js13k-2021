@@ -15,6 +15,11 @@ function toggleVisibility (element, show) {
 }
 
 const introModal = getElement(classNames.intro)
+const startButton = getElement(classNames.start)
+const tutorialButton = getElement(classNames.tutorial)
+const tutorialDoneButton = getElement(classNames.tutorialDone)
+const nextButton = getElement(classNames.next)
+const tutorialModal = getElement(classNames.tutorialModal)
 const difficultyModal = getElement(classNames.menu)
 const difficultyButton = getElement(classNames.openMenu)
 const newGameButton = getElement(classNames.new)
@@ -28,15 +33,25 @@ const congratulations = getElement(classNames.congratulations)
 /**
  * UI event handlers
  */
-let onIntroDismiss
+let onStart
+let onTutorial
+let onTutorialEnd
 let onDifficultySelect
 let onUndo
 let onNewGame
 let onSolve
 let onRestart
 
-export function bindIntroDismiss (callback) {
-  onIntroDismiss = callback
+export function bindStart (callback) {
+  onStart = callback
+}
+
+export function bindTutorial (callback) {
+  onTutorial = callback
+}
+
+export function bindTutorialEnd (callback) {
+  onTutorialEnd = callback
 }
 
 export function bindDifficultySelect (callback) {
@@ -66,13 +81,19 @@ export function toggleUndo (show) {
   toggleVisibility(undoButton, show)
 }
 
+export function showTutorial () {
+  toggleVisibility(tutorialModal, true)
+}
+
 export function showButtons () {
   toggleVisibility(topButtons, true)
+  toggleVisibility(difficultyButton, true)
 }
 
 export function hideButtons () {
   toggleUndo(false)
   toggleVisibility(topButtons, false)
+  toggleVisibility(difficultyButton, false)
 }
 
 export function showCongratulations () {
@@ -88,15 +109,48 @@ export function hideCongratulations () {
 }
 
 export function updateDifficultyButton (settings) {
-  difficultyButton.textContent = `${settings.width}x${settings.height}${settings.wrapping ? ' no border' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
+  difficultyButton.textContent = `${settings.width}x${settings.height}${settings.wrapping ? ' no edge' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
 }
 
 export function start () {
   toggleVisibility(loadingScreen, false)
 
-  introModal.onclick = () => {
+  startButton.onclick = () => {
     toggleVisibility(introModal, false)
-    onIntroDismiss()
+    toggleVisibility(tutorialModal, false)
+    onStart()
+  }
+
+  tutorialButton.onclick = () => {
+    toggleVisibility(introModal, false)
+    onTutorial()
+  }
+
+  nextButton.onclick = () => {
+    const steps = [...document.querySelectorAll('.' + classNames.step)]
+    let foundVisible = false
+
+    for (let i = 0; i < steps.length; i++) {
+      const el = steps[i]
+      if (!el.classList.contains(classNames._hidden)) {
+        foundVisible = true
+        el.classList.add(classNames._hidden)
+
+      } else if (foundVisible) {
+        el.classList.remove(classNames._hidden)
+        if (i === steps.length - 1) {
+          toggleVisibility(nextButton, false)
+          toggleVisibility(tutorialDoneButton, true)
+        }
+        break
+      }
+    }
+  }
+
+  tutorialDoneButton.onclick = () => {
+    toggleVisibility(introModal, false)
+    toggleVisibility(tutorialModal, false)
+    onTutorialEnd()
   }
 
   difficultyButton.onclick = () => {
@@ -139,12 +193,4 @@ export function start () {
       })
     }
   }
-}
-
-function processMonetization () {
-  // TODO
-}
-
-if (document['monetization']) {
-  document['monetization'].addEventListener('monetizationstart', processMonetization)
 }

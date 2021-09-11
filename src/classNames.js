@@ -17,5 +17,11 @@ export const classNames = {
   solve: 'p',
   topButtons: 'q',
   bottomButtons: 'r',
-  congratulations: 's'
+  congratulations: 's',
+  start: 't',
+  tutorial: 'u',
+  tutorialDone: 'v',
+  tutorialModal: 'w',
+  next: 'x',
+  step: 'y'
 }

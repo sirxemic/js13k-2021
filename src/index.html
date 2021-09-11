@@ -92,7 +92,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
     z-index: 100;
   }
 
@@ -122,7 +121,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15vh;
+    font-size: 12vh;
     transition: all 0.5s ease;
     text-shadow: 0 0 0.08em rgba(0,0,0,0.4);
     pointer-events: none;
@@ -131,6 +130,22 @@
   ._hidden {
     pointer-events: none;
     opacity: 0;
+  }
+
+  .tutorialModal {
+    top: auto;
+  }
+
+  .tutorialModal .wrapper {
+    align-self: flex-end;
+  }
+
+  .tutorialModal ._hidden {
+    display: none;
+  }
+
+  p:first-child {
+    margin-top: 0;
   }
 </style>
 <style>
@@ -150,13 +165,42 @@
     </div>
   </div>
 
+  <div class="modal tutorialModal _hidden">
+    <div class="wrapper">
+      <div class="step">
+        <p>Your goal is to fill all spaces with galaxy pieces.</p>
+        <p>There is a catch, though: all galaxies have to keep their rotational symmetry, cannot be destroyed and cannot overlap!</p>
+      </div>
+      <div class="step _hidden">
+        <p>Drag a galaxy piece to a space to fill or replace that space with the selected galaxy.</p>
+        <p>You'll notice that the galaxy will keep its symmetry.</p>
+      </div>
+      <div class="step _hidden">
+        <p>If filling a space does not seem to work, pay attention to the opposite end. If the edge of the board or another galaxy's center is in the way, it won't work.</p>
+      </div>
+      <div class="step _hidden">
+        <p>Sometimes it can be useful to lock a galaxy piece in place. If you are confident a space is filled with the correct galaxy, you can click/tap and hold for a bit to lock it.</p>
+        <p>Click a locked piece to unlock it.</p>
+      </div>
+      <div class="step _hidden">
+        <p>To remove a galaxy piece, you can either drag empty spaces onto it, or drag pieces of the same galaxy onto each other.</p>
+        <p>The centers of galaxies cannot be removed.</p>
+      </div>
+      <div class="step _hidden">
+        <p>And that's it! Have fun!</p>
+      </div>
+      <div class="button next">Next</div>
+      <div class="button tutorialDone _hidden">Let's play</div>
+    </div>
+  </div>
+
   <div class="modal menu _hidden">
     <div class="wrapper">
       <h1>Choose difficulty</h1>
       <div class="button" data-diff="[7,7,0,0]">7x7 - Easy</div>
       <div class="button" data-diff="[7,7,1,0]">7x7 - Hard</div>
-      <div class="button" data-diff="[7,7,0,1]">7x7 no border - Hard</div>
-      <div class="button" data-diff="[10,10,1,1]">10x10 no border - Hard</div>
+      <div class="button" data-diff="[7,7,1,1]">7x7 no edge - Hard</div>
+      <div class="button" data-diff="[10,10,1,1]">10x10 no edge - Hard</div>
     </div>
   </div>
 
@@ -168,7 +212,7 @@
       <div class="solve button">Solve</div>
     </div>
     <div class="bottomButtons">
-      <div class="openMenu button"></div>
+      <div class="openMenu button _hidden"></div>
       <div class="undo button _hidden">Undo</div>
     </div>
   </div>

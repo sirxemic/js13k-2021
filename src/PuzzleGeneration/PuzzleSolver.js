@@ -4,16 +4,16 @@ export class PuzzleSolver {
   constructor (puzzle) {
     this.puzzle = puzzle
 
-    this.tilesToSolve = new Set(this.puzzle.grid)
-    this.tilesPerGalaxy = this.puzzle.centers.map(_ => [])
+    this.spacesToSolve = new Set(this.puzzle.grid)
+    this.spacesPerGalaxy = this.puzzle.centers.map(_ => [])
   }
 
   solve () {
-    while (this.tilesToSolve.size > 0) {
-      if (this.markTrivialCells()) {
+    while (this.spacesToSolve.size > 0) {
+      if (this.markTrivialSpaces()) {
         continue
       }
-      if (this.markTrivialCellsByVisibility()) {
+      if (this.markTrivialSpacesByVisibility()) {
         continue
       }
       return false
@@ -21,92 +21,81 @@ export class PuzzleSolver {
     return true
   }
 
-  markTrivialCells () {
+  markTrivialSpaces () {
     let marked = false
-    for (let tile of this.tilesToSolve) {
-      if (tile.id !== -1) {
-        this.tilesToSolve.delete(tile)
+    for (let space of this.spacesToSolve) {
+      if (space.id !== -1) {
+        this.spacesToSolve.delete(space)
         continue
       }
       let possibleGalaxyIds = []
       for (let id = 0; id < this.puzzle.centers.length; id++) {
-        const opposite = this.puzzle.getOpposite(tile, id)
-        const oppositeTile = this.puzzle.getTileAt(opposite)
-        if (oppositeTile && oppositeTile.id === -1) {
+        const oppositeSpace = this.puzzle.getOppositeSpaceFromId(space, id)
+        if (oppositeSpace && oppositeSpace.id === -1) {
           possibleGalaxyIds.push(id)
         }
       }
       if (possibleGalaxyIds.length === 1) {
-        this.updateCell(tile, possibleGalaxyIds[0])
+        this.updateSpace(space, possibleGalaxyIds[0])
         marked = true
       }
     }
     return marked
   }
 
-  markTrivialCellsByVisibility () {
+  markTrivialSpacesByVisibility () {
     let marked = false
     const possibleGalaxyIds = new Map()
     for (let id = 0; id < this.puzzle.centers.length; id++) {
-      const visibleCells = this.getVisibleUnprocessedCells(id)
-      for (const cell of visibleCells) {
-        if (!possibleGalaxyIds.has(cell)) {
-          possibleGalaxyIds.set(cell, [])
+      const visibleSpaces = this.getVisibleUnprocessedSpaces(id)
+      for (const space of visibleSpaces) {
+        if (!possibleGalaxyIds.has(space)) {
+          possibleGalaxyIds.set(space, [])
         }
-        possibleGalaxyIds.get(cell).push(id)
+        possibleGalaxyIds.get(space).push(id)
       }
     }
 
-    for (const cell of possibleGalaxyIds.keys()) {
-      const ids = possibleGalaxyIds.get(cell)
-      if (ids.get(cell).length === 1) {
-        this.updateCell(cell, popFromSet(ids))
+    for (const space of possibleGalaxyIds.keys()) {
+      const ids = possibleGalaxyIds.get(space)
+      if (ids.get(space).length === 1) {
+        this.updateSpace(space, popFromSet(ids))
         marked = true
       }
     }
     return marked
   }
 
-  updateCell (cell, id) {
-    const result = this.puzzle.setSymmetricallyAt(cell, id)
-    this.tilesToSolve.delete(cell)
-    this.tilesPerGalaxy[id].push(cell)
+  updateSpace (space, id) {
+    this.puzzle.setSymmetricallyAt(space, id)
+    this.spacesToSolve.delete(space)
+    this.spacesPerGalaxy[id].push(space)
   }
 
-  getVisibleUnprocessedCells (id) {
+  getVisibleUnprocessedSpaces (id) {
     const result = new Set()
-    const toProcess = new Set(this.tilesPerGalaxy[id])
+    const toProcess = new Set(this.spacesPerGalaxy[id])
     const processed = new Set()
     while (toProcess.length > 0) {
-      const cell = popFromSet(toProcess)
-      processed.add(cell)
+      const space = popFromSet(toProcess)
+      processed.add(space)
       const neighbours = this.puzzle
-        .getNeighbours(cell)
+        .getNeighbouringSpaces(space)
         .filter(x => {
           if (!x) return false
           if (x.id !== -1) return false
-          const opposite = this.puzzle.getOpposite(x, id)
-          const oppositeTile = this.puzzle.getTileAt(opposite)
-          if (!oppositeTile) return false
-          if (oppositeTile.id !== -1) return false
+          const oppositeSpace = this.puzzle.getOppositeSpaceFromId(x, id)
+          if (!oppositeSpace) return false
+          if (oppositeSpace.id !== -1) return false
           return true
         })
       for (const neighbor in neighbours) {
-        if (!processed.has(cell)) {
+        if (!processed.has(space)) {
           toProcess.add(neighbor)
         }
         result.add(neighbor)
       }
     }
     return result
-  }
-
-  getNeighbours ({ x, y }) {
-    return [
-      this.puzzle.getTileAt({ x, y: y - 1 }),
-      this.puzzle.getTileAt({ x: x - 1, y }),
-      this.puzzle.getTileAt({ x: x + 1, y }),
-      this.puzzle.getTileAt({ x, y: y + 1})
-    ].filter(x => x)
   }
 }
