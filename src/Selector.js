@@ -143,7 +143,7 @@ export class Selector {
         execute: () => {
           if (!Input.pointerDown) {
             const spaceAtPointer = currentPuzzle.getSpaceAt(lastCursorPos)
-            if ((!spaceAtPointer.locked && currentTime >= this.startTimestamp + 0.2) || currentPuzzle.isLockedAt(spaceAtPointer)) {
+            if (currentTime >= this.startTimestamp + 0.2 || currentPuzzle.isLockedAt(spaceAtPointer)) {
               if (currentPuzzle.toggleLockedAt(lastCursorPos)) {
                 playSample(LockSound)
               }
