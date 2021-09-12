@@ -5,13 +5,13 @@ export class Board {
     this.width = width
     this.height = height
     this.wrapping = wrapping
-    this.galaxies = []
 
     this.init()
   }
 
   init () {
     this.grid = []
+    this.galaxies = []
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         this.grid.push({ x, y, id: -1 })
@@ -194,7 +194,7 @@ export class Board {
     for (let y = this.height - 1; y >= 0; y--) {
       for (let x = 0; x < this.width; x++) {
         const id = this.getSpaceAt({ x, y }).id
-        s += mapping[id === -1 ? ' ' : id % mapping.length]
+        s += id === -1 ? ' ' : mapping[id % mapping.length]
       }
       s += '\n'
     }

@@ -1,4 +1,5 @@
-import { shuffle } from '../utils.js'
+import { Vector2 } from '../Math/Vector2.js'
+import { closestModulo, shuffle } from '../utils.js'
 import { GenerationAlgorithmBase } from './GenerationAlgorithmBase.js'
 
 const SPACE_TYPE = 0
@@ -95,32 +96,40 @@ export class GenerationAlgorithm1 extends GenerationAlgorithmBase {
     }
 
     // Expanding failed, try moving center
-    let centerX = center.x * currentGalaxySize
-    let centerY = center.y * currentGalaxySize
+    const newCenter = new Vector2(
+      center.x * currentGalaxySize,
+      center.y * currentGalaxySize
+    )
 
     spaces.forEach(space => {
-      centerX += space.x
-      centerY += space.y
+      newCenter.x += this.board.wrapping ? closestModulo(center.x, space.x + 0.5, this.board.width) : space.x + 0.5
+      newCenter.y += this.board.wrapping ? closestModulo(center.y, space.y + 0.5, this.board.height) : space.y + 0.5
     })
 
-    centerX /= currentGalaxySize + spaces.length
-    centerY /= currentGalaxySize + spaces.length
+    newCenter.x /= currentGalaxySize + spaces.length
+    newCenter.y /= currentGalaxySize + spaces.length
 
-    if (centerX % 0.5 !== 0 || centerY % 0.5 !== 0) {
+    newCenter.x = (newCenter.x + this.board.width) % this.board.width
+    newCenter.y = (newCenter.y + this.board.height) % this.board.height
+
+    if (newCenter.x % 0.5 !== 0 || newCenter.y % 0.5 !== 0) {
       // new center to encompass new spaces does not lie on a valid position
       return false
     }
 
     // Check if the existing spaces of the galaxy still have valid opposites with the new center
     // and the new ones as well
-    for (const space of [...this.board.galaxies[id].spaces, ...spaces]) {
-      const opposite = this.board.getOppositeSpaceFrom(space, { x: centerX, y: centerY })
+    const newSpaces = [...this.board.galaxies[id].spaces, ...spaces]
+    for (const space of newSpaces) {
+      const opposite = this.board.getOppositeSpaceFrom(space, newCenter)
       if (!opposite || (opposite.id !== -1 && opposite.id !== id)) {
         return false
       }
     }
 
-    for (const space of spaces) {
+    this.board.galaxies[id].center = newCenter
+
+    for (const space of newSpaces) {
       this.board.setSymmetricallyAt(space, id)
     }
 

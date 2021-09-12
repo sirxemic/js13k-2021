@@ -1,6 +1,9 @@
 import { Puzzle } from './Puzzle.js'
+import { DebugAlgorithm } from './PuzzleGeneration/DebugAlgorithm.js'
 import { GenerationAlgorithm1 } from './PuzzleGeneration/GenerationAlgorithm1.js'
 import { PuzzleSolver } from './PuzzleGeneration/PuzzleSolver.js'
+
+const USE_PRESET = false
 
 export class PuzzleGenerator {
   constructor ({ width, height, wrapping, difficulty }) {
@@ -15,13 +18,16 @@ export class PuzzleGenerator {
     let bestPass
     let i
 
-    for (i = 0; i < 100; i++) {
-      pass = new GenerationAlgorithm1(this.width, this.height, this.wrapping)
+    const maxPasses = USE_PRESET ? 1 : 100
+
+    for (i = 0; i < maxPasses; i++) {
+      const Algo = USE_PRESET ? DebugAlgorithm : GenerationAlgorithm1
+      pass = new Algo(this.width, this.height, this.wrapping)
       pass.generate()
       const diffDiff = this.matchesDifficulty(pass)
 
       // <dev-only>
-      console.log({ 0: 'correct diff', '-1': 'too easy', 1: 'too hard' }[diffDiff])
+      console.log({ 0: 'correct difficulty', '-1': 'too easy', 1: 'too hard' }[diffDiff])
       // </dev-only>
       if (diffDiff === 0) {
         bestPass = pass
@@ -31,7 +37,7 @@ export class PuzzleGenerator {
       }
     }
     // <dev-only>
-    console.log(i, 'passes')
+    console.log(i === maxPasses ? 'Could not find a puzzle with the right difficulty' : `Took ${i} passes`)
     bestPass.board.debug()
     // </dev-only>
     return new Puzzle(this.width, this.height, bestPass.board.galaxies, this.wrapping)
@@ -49,19 +55,35 @@ export class PuzzleGenerator {
         expandableGalaxyCount++
       }
     }
-    const minimum = this.difficulty === 0 ? 3 : 5
-    const maximum = Math.sqrt(this.width * this.height) - 1
-    if (expandableGalaxyCount < minimum) {
-      return -1 // Too easy
-    }
-    if (expandableGalaxyCount > maximum) {
-      return 1 // Too hard
-    }
+
+    // <dev-only>
+    console.log('Expandable galaxy count:', expandableGalaxyCount)
+    // </dev-only>
+    // const minimum = this.difficulty === 0 ? 3 : 5
+    // const maximum = Math.sqrt(this.width * this.height) - 1
+    // if (expandableGalaxyCount < minimum) {
+    //   // <dev-only>
+    //   console.log('Too new expandle galaxies (too easy)')
+    //   // </dev-only>
+    //   return -1 // Too easy
+    // }
+    // if (expandableGalaxyCount > maximum) {
+    //   // <dev-only>
+    //   console.log('Too many expandle galaxies (too hard)')
+    //   // </dev-only>
+    //   return 1 // Too hard
+    // }
 
     if (result) {
+      // <dev-only>
+      console.log('solvable without backtracking')
+      // </dev-only>
       // Solvable without backtracking
       return this.difficulty === 1 ? -1 : 0
     } else {
+      // <dev-only>
+      console.log('not solvable without backtracking')
+      // </dev-only>
       // Not solvable without backtracking (or multiple solutions exist)
       return this.difficulty === 1 ? 0 : 1
     }

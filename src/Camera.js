@@ -14,8 +14,8 @@ export class Camera {
     this.viewMatrix = new Matrix4()
     this.x = 0
     this.y = 0
-    this.deltaX = 0
-    this.deltaY = 0
+    this.velX = 0
+    this.velY = 0
     this.zoom = 1000
 
     document.addEventListener('wheel', this.onWheel.bind(this))
@@ -59,16 +59,16 @@ export class Camera {
       const margin = Math.min(TheCanvas.width, TheCanvas.height) * 0.1
       const acc = this.zoom * delta
 
-      if (Input.mouseX < margin) this.deltaX -= acc
-      if (Input.mouseY < margin) this.deltaY += acc
-      if (Input.mouseX > TheCanvas.width - margin) this.deltaX += acc
-      if (Input.mouseY > TheCanvas.height - margin) this.deltaY -= acc
+      if (Input.mouseX < margin) this.velX -= acc
+      if (Input.mouseY < margin) this.velY += acc
+      if (Input.mouseX > TheCanvas.width - margin) this.velX += acc
+      if (Input.mouseY > TheCanvas.height - margin) this.velY -= acc
 
-      this.deltaX -= 4 * this.deltaX * delta
-      this.deltaY -= 4 * this.deltaY * delta
+      this.velX -= 4 * this.velX * delta
+      this.velY -= 4 * this.velY * delta
 
-      this.x += this.deltaX * delta
-      this.y += this.deltaY * delta
+      this.x += this.velX * delta
+      this.y += this.velY * delta
     }
 
     if (!currentPuzzle.wrapping) {

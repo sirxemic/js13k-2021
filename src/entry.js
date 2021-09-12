@@ -161,10 +161,6 @@ const mainFSM = new FSM({
       selector = new Selector()
       TheCamera.reset()
       TheCamera.y = 2
-    },
-
-    execute () {
-
     }
   },
 

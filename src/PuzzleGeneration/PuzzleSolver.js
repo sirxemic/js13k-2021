@@ -5,7 +5,7 @@ export class PuzzleSolver {
     this.puzzle = puzzle
 
     this.spacesToSolve = new Set(this.puzzle.grid)
-    this.spacesPerGalaxy = this.puzzle.centers.map(_ => [])
+    this.spacesPerGalaxy = this.puzzle.centers.map(center => this.puzzle.getTouchingSpaces(center))
   }
 
   solve () {
@@ -56,10 +56,9 @@ export class PuzzleSolver {
       }
     }
 
-    for (const space of possibleGalaxyIds.keys()) {
-      const ids = possibleGalaxyIds.get(space)
-      if (ids.get(space).length === 1) {
-        this.updateSpace(space, popFromSet(ids))
+    for (const [space, ids] of possibleGalaxyIds.entries()) {
+      if (ids.length === 1) {
+        this.updateSpace(space, ids[0])
         marked = true
       }
     }
@@ -68,6 +67,8 @@ export class PuzzleSolver {
 
   updateSpace (space, id) {
     this.puzzle.setSymmetricallyAt(space, id)
+    const opposite = this.puzzle.getOppositeSpaceFromId(space, id)
+    this.spacesToSolve.delete(opposite)
     this.spacesToSolve.delete(space)
     this.spacesPerGalaxy[id].push(space)
   }
@@ -76,7 +77,7 @@ export class PuzzleSolver {
     const result = new Set()
     const toProcess = new Set(this.spacesPerGalaxy[id])
     const processed = new Set()
-    while (toProcess.length > 0) {
+    while (toProcess.size > 0) {
       const space = popFromSet(toProcess)
       processed.add(space)
       const neighbours = this.puzzle
@@ -89,11 +90,12 @@ export class PuzzleSolver {
           if (oppositeSpace.id !== -1) return false
           return true
         })
-      for (const neighbor in neighbours) {
-        if (!processed.has(space)) {
+      for (const neighbor of neighbours) {
+        if (!processed.has(neighbor)) {
           toProcess.add(neighbor)
         }
         result.add(neighbor)
+        result.add(this.puzzle.getOppositeSpaceFromId(neighbor, id))
       }
     }
     return result
