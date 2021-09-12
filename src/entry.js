@@ -34,9 +34,9 @@ import { Vector2 } from './Math/Vector2.js'
 function resizeCanvas () {
   TheCanvas.width = window.innerWidth
   TheCanvas.height = window.innerHeight
+  TheCamera.updateMaxZoom()
 }
 
-resizeCanvas()
 window.onresize = resizeCanvas
 
 /**
@@ -72,6 +72,9 @@ const mainFSM = new FSM({
     enter () {
       const puzzle = new PuzzleGenerator(puzzleSettings).generate()
       setCurrentPuzzle(puzzle)
+
+      resizeCanvas()
+
       renderer = new PuzzleRenderer()
       TheCamera.reset()
 

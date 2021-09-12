@@ -121,6 +121,17 @@ export function updateDifficultyButton () {
     `${puzzleSettings.size}x${puzzleSettings.size}${edgeless} - ${difficulty}`
 }
 
+let dirtySettings
+
+function updateSettingButtons () {
+  getElements(classNames.button).forEach(button => {
+    button.classList.remove(classNames._active)
+  })
+  difficultyModal.querySelector(`[data-s="${dirtySettings.size}"]`).classList.add(classNames._active)
+  difficultyModal.querySelector(`[data-w="${+dirtySettings.wrapping}"]`).classList.add(classNames._active)
+  difficultyModal.querySelector(`[data-d="${dirtySettings.difficulty}"]`).classList.add(classNames._active)
+}
+
 export function start () {
   toggleVisibility(loadingScreen, false)
 
@@ -162,10 +173,9 @@ export function start () {
     onTutorialEnd()
   }
 
-  let dirtySettings
-
   difficultyButton.onclick = () => {
     dirtySettings = { ...puzzleSettings }
+    updateSettingButtons()
     toggleVisibility(difficultyModal, true)
   }
 
@@ -190,15 +200,6 @@ export function start () {
       onUndo()
     }
   })
-
-  function updateSettingButtons () {
-    getElements(classNames.button).forEach(button => {
-      button.classList.remove(classNames._active)
-    })
-    difficultyModal.querySelector(`[data-s="${dirtySettings.size}"]`).classList.add(classNames._active)
-    difficultyModal.querySelector(`[data-w="${+dirtySettings.wrapping}"]`).classList.add(classNames._active)
-    difficultyModal.querySelector(`[data-d="${dirtySettings.difficulty}"]`).classList.add(classNames._active)
-  }
 
   difficultyModal.onclick = (e) => {
     if (e.target === difficultyModal) {

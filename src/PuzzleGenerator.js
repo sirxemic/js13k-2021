@@ -47,17 +47,16 @@ export class PuzzleGenerator {
     const solver = new PuzzleSolver(new Puzzle(this.size, galaxies, this.wrapping))
     const result = solver.solve()
 
-    // Check that there aren't too few or too many galaxies to expand
+    // <dev-only>
     let expandableGalaxyCount = 0
     for (const galaxy of galaxies) {
       if (galaxy.centerSpaces.size < galaxy.spaces.size) {
         expandableGalaxyCount++
       }
     }
-
-    // <dev-only>
     console.log('Expandable galaxy count:', expandableGalaxyCount)
     // </dev-only>
+    // Check that there aren't too few or too many galaxies to expand
     // const minimum = this.difficulty === 0 ? 3 : 5
     // const maximum = this.size - 1
     // if (expandableGalaxyCount < minimum) {

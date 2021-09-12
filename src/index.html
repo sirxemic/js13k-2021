@@ -2,125 +2,133 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="monetization" content="$coil.xrptipbot.com/gsHvVinbSGGbm7Mu1zeE1Q">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1">
 <title>Galaxies</title>
 <style>
   * {
     user-select: none;
-    -webkit-touch-callout: none;
     -webkit-user-select: none;
   }
   body {
     background: #000;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: max(1rem, 3vmin);
+    font-weight: bold;
     margin: 0;
     overflow: hidden;
-    font-family: sans-serif;
-    font-weight: bold;
-    font-size: 3vmin;
-    color: #fff;
     text-shadow: 0 0 0.1em #000;
   }
 
   .loading {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
     align-items: center;
-    justify-content: center;
     background: rgb(5, 0, 13);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    position: fixed;
+    z-index: 1000;
   }
 
   .button {
-    min-width: 6em;
-    text-align: center;
+    align-items: center;
     border: 1px solid;
-    padding: 0.5em 1em;
     border-radius: 0.25em;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    max-width: 40vw;
+    min-width: 5em;
+    padding: 0.5em 1em;
+    text-align: center;
     transition: all 0.2s ease;
   }
 
   .topButtons, .bottomButtons {
     --p: max(25px, 1em);
     position: fixed;
-    z-index: 1;
     transition: all 0.2s ease;
+    z-index: 1;
   }
   .topButtons {
     display: flex;
-    top: var(--p);
     left: 50%;
+    top: var(--p);
     transform: translateX(-50%);
   }
   .bottomButtons {
+    align-items: center;
+    bottom: var(--p);
     display: flex;
     justify-content: space-between;
     left: var(--p);
-    bottom: var(--p);
     right: var(--p);
   }
   .restart {
     border-radius: 0.25em 0 0 0.25em;
   }
   .new {
-    border-radius: 0;
     border-left: none;
+    border-radius: 0;
   }
   .solve {
-    border-radius: 0 0.25em 0.25em 0;
     border-left: none;
+    border-radius: 0 0.25em 0.25em 0;
   }
 
-  .wrapper, .ui .button {
-    background: rgba(5, 0, 13, 0.7);
-    backdrop-filter: blur(5px);
+  .wrapper, .ui .button, .intro .button {
     -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    background: rgba(5, 0, 13, 0.7);
   }
 
   .button:hover {
     background: rgba(25, 0, 25, 0.7);
   }
   .button:active, .button._active, .button:focus {
-    box-shadow: 0 0 2em rgba(255,255,255,0.5) inset;
+    box-shadow: 0 0 2em #fffa inset, 0 0 1em #fffa inset;
   }
 
   .modal {
-    position: fixed;
-    inset: 0;
-    display: flex;
     align-items: center;
+    display: flex;
+    inset: 0;
     justify-content: center;
+    position: fixed;
     z-index: 100;
   }
 
   .wrapper {
-    max-width: 30em;
-    min-width: 10em;
-    padding: 2em;
+    align-items: center;
     border-radius: 0.5vmin;
     box-shadow: 0 0 2vmin #000;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    max-width: 30em;
+    min-width: 10em;
+    padding: 2em;
   }
 
-  h1, h2 {
-    text-align: center;
+  h1, h3 {
     margin-top: 0;
+    text-align: center;
+  }
+
+  h1 {
+    margin-bottom: 2em;
+    text-shadow: 0 0 0.1em #000, 0 0 1em #000;
   }
 
   .congratulations {
-    position: fixed;
-    inset: 0;
-    display: flex;
     align-items: center;
-    justify-content: center;
+    display: flex;
     font-size: 12vh;
-    transition: all 0.5s ease;
-    text-shadow: 0 0 0.08em rgba(0,0,0,0.4);
+    inset: 0;
+    justify-content: center;
+    margin: 0;
     pointer-events: none;
+    position: fixed;
+    transition: all 0.5s ease;
   }
 
   .intro .button + .button{
@@ -128,8 +136,8 @@
   }
 
   ._hidden {
-    pointer-events: none;
     opacity: 0;
+    pointer-events: none;
   }
 
   .tutorialModal {
@@ -151,6 +159,7 @@
   .grid {
     display: flex;
     gap: 0.5em;
+    margin-bottom: 1em;
   }
   .grid > div {
     display: flex;
@@ -165,10 +174,10 @@
 <body>
   <canvas></canvas>
 
-  <div class="loading">Loading...</div>
+  <div class="loading">Loading.</div>
 
   <div class="modal intro">
-    <div class="wrapper">
+    <div>
       <h1>Galaxies</h1>
       <div class="button start">Start</div>
       <div class="button tutorial">Tutorial</div>
@@ -208,7 +217,7 @@
     <div class="wrapper">
       <div class="grid">
         <div>
-          <h2>Size</h2>
+          <h3>Size</h3>
           <div class="button" data-s="5">5x5</div>
           <div class="button _active" data-s="7">7x7</div>
           <div class="button" data-s="9">9x9</div>
@@ -216,12 +225,12 @@
           <div class="button" data-s="13">13x13</div>
         </div>
         <div>
-          <h2>Edgeless</h2>
+          <h3>Edgeless</h3>
           <div class="button _active" data-w="0">No</div>
           <div class="button" data-w="1">Yes</div>
         </div>
         <div>
-          <h2>Difficulty</h2>
+          <h3>Difficulty</h3>
           <div class="button _active" data-d="0">Normal</div>
           <div class="button" data-d="1">Ridiculous</div>
         </div>
@@ -231,7 +240,7 @@
   </div>
 
   <div class="ui">
-    <div class="congratulations _hidden">Nice!</div>
+    <h1 class="congratulations _hidden">Nice!</h1>
     <div class="topButtons _hidden">
       <div class="button restart">Restart</div>
       <div class="button new">New game</div>

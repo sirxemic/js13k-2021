@@ -161,6 +161,7 @@ export function smoothstep(edge0, edge1, x) {
  * while the assets are being generated
  */
 export async function waitForNextFrame () {
+  document.querySelector('.loading').textContent += '.'
   await new Promise(resolve => requestAnimationFrame(resolve))
 }
 

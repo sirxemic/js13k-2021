@@ -3,8 +3,7 @@ import { createAudioBuffer } from './SoundGeneration.js'
 import {
   addNotes,
   getOffsetForBar,
-  createTempBuffer,
-  makeNotesFromBars
+  createTempBuffer
 } from './SongGeneration.js'
 import { createBassSound } from './MusicSamples/Bass.js'
 import { createPadsSound } from './MusicSamples/Pads.js'
@@ -194,15 +193,9 @@ async function createMelodyTrack () {
 }
 
 export default async function createSong () {
-  const [
-    bufferBass,
-    bufferPads,
-    bufferMelody
-  ] = await Promise.all([
-    createBassTrack(),
-    createPadsTrack(),
-    createMelodyTrack()
-  ])
+  const bufferBass = await createBassTrack()
+  const bufferPads = await createPadsTrack()
+  const bufferMelody = await createMelodyTrack()
 
   return new Song(
     [

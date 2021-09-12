@@ -25,11 +25,17 @@ export class Camera {
     this.x = currentPuzzle.size - 1
     this.y = currentPuzzle.size - 1
 
+    this.updateMaxZoom()
+    this.zoom = this.initZoom
+  }
+
+  updateMaxZoom () {
     const fovX = 2 * Math.atan(TheCanvas.width / TheCanvas.height * Math.tan(FOVY / 2))
     const zX = currentPuzzle.size / Math.tan(fovX)
     const zY = currentPuzzle.size / Math.tan(FOVY)
 
-    this.zoom = this.maxZoom = 3 * Math.max(zX, zY)
+    this.initZoom = 3 * Math.max(zX, zY)
+    this.maxZoom = (currentPuzzle.wrapping ? 1.6 : 1) * this.initZoom
   }
 
   get lookAt () {
