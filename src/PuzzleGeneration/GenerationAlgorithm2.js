@@ -3,8 +3,8 @@ import { Vector2 } from '../Math/Vector2.js'
 import { GenerationAlgorithmBase } from './GenerationAlgorithmBase.js'
 
 export class GenerationAlgorithm2 extends GenerationAlgorithmBase {
-  constructor (width, height, wrapping) {
-    super(width, height, wrapping)
+  constructor (size, wrapping) {
+    super(size, wrapping)
   }
 
   generate () {
@@ -20,8 +20,8 @@ export class GenerationAlgorithm2 extends GenerationAlgorithmBase {
     this.availableCenterPositions = new Set()
     const minX = this.wrapping ? 0 : 0.5
     const minY = this.wrapping ? 0 : 0.5
-    const maxX = this.width - 0.5
-    const maxY = this.height - 0.5
+    const maxX = this.size - 0.5
+    const maxY = this.size - 0.5
 
     for (let x = minX; x <= maxX; x += 0.5) {
       for (let y = minY; y <= maxY; y += 0.5) {
@@ -111,8 +111,8 @@ export class GenerationAlgorithm2 extends GenerationAlgorithmBase {
     }
 
     // First see if there are clusters of 4 singletons
-    const maxX = this.wrapping ? this.width : this.width - 1
-    const maxY = this.wrapping ? this.height : this.height - 1
+    const maxX = this.wrapping ? this.size : this.size - 1
+    const maxY = this.wrapping ? this.size : this.size - 1
     for (let x = 0; x < maxX; x++) {
       for (let y = 0; y < maxY; y++) {
         const center = new Vector2(x + 1, y + 1)
@@ -130,13 +130,13 @@ export class GenerationAlgorithm2 extends GenerationAlgorithmBase {
 
     // Then for horizontal clusters
     for (let x = 0; x < maxX; x++) {
-      for (let y = 0; y < this.height; y++) {
+      for (let y = 0; y < this.size; y++) {
         let spaces = [this.board.getSpaceAt({ x, y })]
         if (!spaces[0].isSingleton) {
           continue
         }
 
-        const maxX2 = this.wrapping ? x + this.width : this.width
+        const maxX2 = this.wrapping ? x + this.size : this.size
         for (let x2 = x + 1; x2 < maxX2; x2++) {
           const space = this.board.getSpaceAt({ x: x2, y })
           if (space.isSingleton) {
@@ -153,13 +153,13 @@ export class GenerationAlgorithm2 extends GenerationAlgorithmBase {
 
     // And finally vertical clusters
     for (let y = 0; y < maxY; y++) {
-      for (let x = 0; x < this.width; x++) {
+      for (let x = 0; x < this.size; x++) {
         let spaces = [this.board.getSpaceAt({ x, y })]
         if (!spaces[0].isSingleton) {
           continue
         }
 
-        const maxY2 = this.wrapping ? y + this.height : this.height
+        const maxY2 = this.wrapping ? y + this.size : this.size
         for (let y2 = y + 1; y2 < maxY2; y2++) {
           const space = this.board.getSpaceAt({ x, y: y2 })
           if (space.isSingleton) {
@@ -186,9 +186,9 @@ export class GenerationAlgorithm2 extends GenerationAlgorithmBase {
     const { x, y } = pos
 
     const xm = x + 0.5
-    const xr = (x + 1) % this.width
+    const xr = (x + 1) % this.size
     const ym = y + 0.5
-    const yb = (y + 1) % this.height
+    const yb = (y + 1) % this.size
     this.availableCenterPositions.delete(`${x}_${y}`) // top-left corner
     this.availableCenterPositions.delete(`${xm}_${y}`) // top edge
     this.availableCenterPositions.delete(`${xr}_${y}`) // top-right corner

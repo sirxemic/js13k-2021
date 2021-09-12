@@ -1,9 +1,8 @@
 import { Vector2 } from './Math/Vector2.js'
 
 export class Board {
-  constructor (width, height, wrapping) {
-    this.width = width
-    this.height = height
+  constructor (size, wrapping) {
+    this.size = size
     this.wrapping = wrapping
 
     this.init()
@@ -12,8 +11,8 @@ export class Board {
   init () {
     this.grid = []
     this.galaxies = []
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+    for (let y = 0; y < this.size; y++) {
+      for (let x = 0; x < this.size; x++) {
         this.grid.push({ x, y, id: -1 })
       }
     }
@@ -49,20 +48,20 @@ export class Board {
 
   getSpaceAt ({ x, y }) {
     if (this.wrapping) {
-      x %= this.width
-      y %= this.height
+      x %= this.size
+      y %= this.size
       if (x < 0) {
-        x += this.width
+        x += this.size
       }
       if (y < 0) {
-        y += this.height
+        y += this.size
       }
     } else {
-      if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+      if (x < 0 || y < 0 || x >= this.size || y >= this.size) {
         return null
       }
     }
-    return this.grid[x + y * this.width]
+    return this.grid[x + y * this.size]
   }
 
   getOppositePositionFrom ({ x, y }, { x: centerX, y: centerY }) {
@@ -191,8 +190,8 @@ export class Board {
   debug () {
     let s = ''
     const mapping = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    for (let y = this.height - 1; y >= 0; y--) {
-      for (let x = 0; x < this.width; x++) {
+    for (let y = this.size - 1; y >= 0; y--) {
+      for (let x = 0; x < this.size; x++) {
         const id = this.getSpaceAt({ x, y }).id
         s += id === -1 ? ' ' : mapping[id % mapping.length]
       }

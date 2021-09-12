@@ -73,7 +73,7 @@ export class PuzzleRenderer {
   render () {
     this.grid.render(this.fadeAmount)
 
-    const { width, height } = currentPuzzle
+    const { size } = currentPuzzle
     this.renderMask()
     gl.viewport(0, 0, TheCanvas.width, TheCanvas.height)
     gl.disable(gl.DEPTH_TEST)
@@ -87,29 +87,29 @@ export class PuzzleRenderer {
     })
 
     const modelMatrix = new Matrix4([
-      width, 0, 0, 0,
-      0, height, 0, 0,
+      size, 0, 0, 0,
+      0, size, 0, 0,
       0, 0, 1, 0,
       0, 0, 0, 1
     ])
     const currentSpacePos = TheCamera.getRayGridIntersection(TheCanvas.width / 2, TheCanvas.height / 2)
 
-    currentSpacePos.x = Math.floor((currentSpacePos.x + 1) / (width * 2))
-    currentSpacePos.y = Math.floor((currentSpacePos.y + 1) / (height * 2))
+    currentSpacePos.x = Math.floor((currentSpacePos.x + 1) / (size * 2))
+    currentSpacePos.y = Math.floor((currentSpacePos.y + 1) / (size * 2))
 
     const marginH = currentPuzzle.wrapping ? 3 : 0
     const marginV = currentPuzzle.wrapping ? 2 : 0
 
-    const offX = (width - 1) / 2
-    const offY = (height - 1) / 2
+    const offX = (size - 1) / 2
+    const offY = (size - 1) / 2
 
     for (let x = -marginH; x <= marginH; x++) {
       for (let y = -marginV; y <= marginV; y++) {
         PuzzleShader.use({
           [U_MODELMATRIX]: modelMatrix.setTranslation(
             new Vector3(
-              ((x + currentSpacePos.x) * width + offX) * 2,
-              ((y + currentSpacePos.y) * height + offY) * 2,
+              ((x + currentSpacePos.x) * size + offX) * 2,
+              ((y + currentSpacePos.y) * size + offY) * 2,
               -0.5
             )
           ),
@@ -124,7 +124,7 @@ export class PuzzleRenderer {
   renderSpaceMask (space) {
     TileShader.use({
       [U_SPACE_POS]: new Vector2(space.x + 0.5, space.y + 0.5),
-      [U_WORLD_SIZE]: new Vector2(currentPuzzle.width, currentPuzzle.height),
+      [U_WORLD_SIZE]: new Vector2(currentPuzzle.size, currentPuzzle.size),
       [U_COLOR]: getValueFromColorId(currentPuzzle.colorIds[space.id % currentPuzzle.colorIds.length]),
       [U_GALAXY_CENTER]: currentPuzzle.centers[space.id],
       [U_LOCKED]: currentPuzzle.isLockedAt(space) ? 1 : 0,

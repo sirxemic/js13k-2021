@@ -2,13 +2,12 @@ import { Board } from '../Board.js'
 import { Vector2 } from '../Math/Vector2.js'
 
 export class GenerationAlgorithmBase {
-  constructor (width, height, wrapping) {
-    this.board = new Board(width, height, wrapping)
-    this.width = width
-    this.height = height
+  constructor (size, wrapping) {
+    this.board = new Board(size, wrapping)
+    this.size = size
     this.wrapping = wrapping
 
-    this.maxGalaxySize = Math.floor(2 * Math.sqrt(this.width * this.height)) * (this.wrapping ? 0.95 : 1)
+    this.maxGalaxySize = 2 * this.size - (this.wrapping ? 1 : 0)
   }
 
   mergeSingletons () {
@@ -34,8 +33,8 @@ export class GenerationAlgorithmBase {
     }
 
     // First see if there are clusters of 4 singletons
-    const maxX = this.wrapping ? this.width : this.width - 1
-    const maxY = this.wrapping ? this.height : this.height - 1
+    const maxX = this.wrapping ? this.size : this.size - 1
+    const maxY = this.wrapping ? this.size : this.size - 1
     for (let x = 0; x < maxX; x++) {
       for (let y = 0; y < maxY; y++) {
         const center = new Vector2(x + 1, y + 1)
@@ -53,13 +52,13 @@ export class GenerationAlgorithmBase {
 
     // Then for horizontal clusters
     for (let x = 0; x < maxX; x++) {
-      for (let y = 0; y < this.height; y++) {
+      for (let y = 0; y < this.size; y++) {
         let spaces = [this.board.getSpaceAt({ x, y })]
         if (!spaces[0].isSingleton) {
           continue
         }
 
-        const maxX2 = this.wrapping ? x + this.width : this.width
+        const maxX2 = this.wrapping ? x + this.size : this.size
         for (let x2 = x + 1; x2 < maxX2; x2++) {
           const space = this.board.getSpaceAt({ x: x2, y })
           if (space.isSingleton) {
@@ -76,13 +75,13 @@ export class GenerationAlgorithmBase {
 
     // And finally vertical clusters
     for (let y = 0; y < maxY; y++) {
-      for (let x = 0; x < this.width; x++) {
+      for (let x = 0; x < this.size; x++) {
         let spaces = [this.board.getSpaceAt({ x, y })]
         if (!spaces[0].isSingleton) {
           continue
         }
 
-        const maxY2 = this.wrapping ? y + this.height : this.height
+        const maxY2 = this.wrapping ? y + this.size : this.size
         for (let y2 = y + 1; y2 < maxY2; y2++) {
           const space = this.board.getSpaceAt({ x, y: y2 })
           if (space.isSingleton) {

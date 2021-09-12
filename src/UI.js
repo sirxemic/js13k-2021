@@ -109,7 +109,7 @@ export function hideCongratulations () {
 }
 
 export function updateDifficultyButton (settings) {
-  difficultyButton.textContent = `${settings.width}x${settings.height}${settings.wrapping ? ' no edge' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
+  difficultyButton.textContent = `${settings.size}x${settings.size}${settings.wrapping ? ' no edge' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
 }
 
 export function start () {
@@ -186,10 +186,9 @@ export function start () {
       toggleVisibility(difficultyModal, false)
       const data = JSON.parse(e.target.dataset['diff'])
       onDifficultySelect({
-        width: data[0],
-        height: data[1],
-        difficulty: data[2],
-        wrapping: data[3]
+        size: data[0],
+        difficulty: data[1],
+        wrapping: data[2]
       })
     }
   }

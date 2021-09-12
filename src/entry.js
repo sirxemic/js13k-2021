@@ -64,8 +64,7 @@ const TUTORIAL_FADE = 5
 const TUTORIAL = 6
 
 let puzzleSettings = {
-  width: 7,
-  height: 7,
+  size: 7,
   difficulty: 0,
   wrapping: false
 }

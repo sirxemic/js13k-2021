@@ -8,15 +8,15 @@ const EDGE_V_TYPE = 2
 const CORNER_TYPE = 3
 
 export class GenerationAlgorithm1 extends GenerationAlgorithmBase {
-  constructor (width, height, wrapping) {
-    super(width, height, wrapping)
+  constructor (size, wrapping) {
+    super(size, wrapping)
   }
 
   generate () {
     const startX = this.wrapping ? 0 : 0.5
     const startY = this.wrapping ? 0 : 0.5
-    const endX = this.board.width - 0.5
-    const endY = this.board.height - 0.5
+    const endX = this.board.size - 0.5
+    const endY = this.board.size - 0.5
 
     const todo = []
     for (let y = startY; y <= endY; y += 0.5) {
@@ -102,15 +102,15 @@ export class GenerationAlgorithm1 extends GenerationAlgorithmBase {
     )
 
     spaces.forEach(space => {
-      newCenter.x += this.board.wrapping ? closestModulo(center.x, space.x + 0.5, this.board.width) : space.x + 0.5
-      newCenter.y += this.board.wrapping ? closestModulo(center.y, space.y + 0.5, this.board.height) : space.y + 0.5
+      newCenter.x += this.board.wrapping ? closestModulo(center.x, space.x + 0.5, this.board.size) : space.x + 0.5
+      newCenter.y += this.board.wrapping ? closestModulo(center.y, space.y + 0.5, this.board.size) : space.y + 0.5
     })
 
     newCenter.x /= currentGalaxySize + spaces.length
     newCenter.y /= currentGalaxySize + spaces.length
 
-    newCenter.x = (newCenter.x + this.board.width) % this.board.width
-    newCenter.y = (newCenter.y + this.board.height) % this.board.height
+    newCenter.x = (newCenter.x + this.board.size) % this.board.size
+    newCenter.y = (newCenter.y + this.board.size) % this.board.size
 
     if (newCenter.x % 0.5 !== 0 || newCenter.y % 0.5 !== 0) {
       // new center to encompass new spaces does not lie on a valid position

@@ -350,8 +350,8 @@ export class Selector {
     y = Math.floor((y + 1) / 2)
 
     if (!currentPuzzle.wrapping) {
-      x = clamp(x, 0, currentPuzzle.width - 1)
-      y = clamp(y, 0, currentPuzzle.height - 1)
+      x = clamp(x, 0, currentPuzzle.size - 1)
+      y = clamp(y, 0, currentPuzzle.size - 1)
     }
 
     return { x, y }
@@ -366,15 +366,15 @@ export class Selector {
     const opposite = currentPuzzle.getOppositePositionFrom({ x, y }, center)
 
     if (currentPuzzle.wrapping) {
-      opposite.x = closestModulo(x, opposite.x, currentPuzzle.width)
-      opposite.y = closestModulo(y, opposite.y, currentPuzzle.height)
+      opposite.x = closestModulo(x, opposite.x, currentPuzzle.size)
+      opposite.y = closestModulo(y, opposite.y, currentPuzzle.size)
 
       for (let ix = -1; ix <= 1; ix++) {
         for (let iy = -1; iy <= 1; iy++) {
           this.addCursorAt(
             {
-              x: opposite.x + ix * currentPuzzle.width,
-              y: opposite.y + iy * currentPuzzle.height
+              x: opposite.x + ix * currentPuzzle.size,
+              y: opposite.y + iy * currentPuzzle.size
             },
             expected
           )

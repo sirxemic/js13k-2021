@@ -5,8 +5,8 @@ import { shuffle } from './utils.js'
 export const INVALID_POS = -2
 
 export class Puzzle extends Board {
-  constructor (width, height, galaxies, wrapping) {
-    super(width, height, wrapping)
+  constructor (size, galaxies, wrapping) {
+    super(size, wrapping)
 
     this.solution = galaxies.map(galaxy => {
       return {
@@ -18,8 +18,8 @@ export class Puzzle extends Board {
     this.centers = galaxies.map(galaxy => galaxy.center)
 
     this.gridOffset = {
-      x: this.width / 2 - 0.5,
-      y: this.height / 2 - 0.5
+      x: this.size / 2 - 0.5,
+      y: this.size / 2 - 0.5
     }
 
     this.colorIds = shuffle([
@@ -185,7 +185,7 @@ export class Puzzle extends Board {
   }
 
   getShaderConnectionData ({ x, y }) {
-    return this.connectionData[x + y * this.width]
+    return this.connectionData[x + y * this.size]
   }
 
   isSpaceConnectedToCenter ({ x, y }) {

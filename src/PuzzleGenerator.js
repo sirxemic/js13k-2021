@@ -6,9 +6,8 @@ import { PuzzleSolver } from './PuzzleGeneration/PuzzleSolver.js'
 const USE_PRESET = false
 
 export class PuzzleGenerator {
-  constructor ({ width, height, wrapping, difficulty }) {
-    this.width = width
-    this.height = height
+  constructor ({ size, wrapping, difficulty }) {
+    this.size = size
     this.wrapping = wrapping
     this.difficulty = difficulty
   }
@@ -22,7 +21,7 @@ export class PuzzleGenerator {
 
     for (i = 0; i < maxPasses; i++) {
       const Algo = USE_PRESET ? DebugAlgorithm : GenerationAlgorithm1
-      pass = new Algo(this.width, this.height, this.wrapping)
+      pass = new Algo(this.size, this.wrapping)
       pass.generate()
       const diffDiff = this.matchesDifficulty(pass)
 
@@ -40,12 +39,12 @@ export class PuzzleGenerator {
     console.log(i === maxPasses ? 'Could not find a puzzle with the right difficulty' : `Took ${i} passes`)
     bestPass.board.debug()
     // </dev-only>
-    return new Puzzle(this.width, this.height, bestPass.board.galaxies, this.wrapping)
+    return new Puzzle(this.size, bestPass.board.galaxies, this.wrapping)
   }
 
   matchesDifficulty (pass) {
     const { galaxies } = pass.board
-    const solver = new PuzzleSolver(new Puzzle(this.width, this.height, galaxies, this.wrapping))
+    const solver = new PuzzleSolver(new Puzzle(this.size, galaxies, this.wrapping))
     const result = solver.solve()
 
     // Check that there aren't too few or too many galaxies to expand
@@ -60,7 +59,7 @@ export class PuzzleGenerator {
     console.log('Expandable galaxy count:', expandableGalaxyCount)
     // </dev-only>
     // const minimum = this.difficulty === 0 ? 3 : 5
-    // const maximum = Math.sqrt(this.width * this.height) - 1
+    // const maximum = this.size - 1
     // if (expandableGalaxyCount < minimum) {
     //   // <dev-only>
     //   console.log('Too new expandle galaxies (too easy)')

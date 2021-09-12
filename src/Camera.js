@@ -22,12 +22,12 @@ export class Camera {
   }
 
   reset () {
-    this.x = currentPuzzle.width - 1
-    this.y = currentPuzzle.height - 1
+    this.x = currentPuzzle.size - 1
+    this.y = currentPuzzle.size - 1
 
     const fovX = 2 * Math.atan(TheCanvas.width / TheCanvas.height * Math.tan(FOVY / 2))
-    const zX = currentPuzzle.width / Math.tan(fovX)
-    const zY = currentPuzzle.height / Math.tan(FOVY)
+    const zX = currentPuzzle.size / Math.tan(fovX)
+    const zY = currentPuzzle.size / Math.tan(FOVY)
 
     this.zoom = this.maxZoom = 3 * Math.max(zX, zY)
   }
@@ -72,8 +72,8 @@ export class Camera {
     }
 
     if (!currentPuzzle.wrapping) {
-      this.x = clamp(this.x, 0, (currentPuzzle.width - 1) * 2)
-      this.y = clamp(this.y, 0, (currentPuzzle.height - 1) * 2)
+      this.x = clamp(this.x, 0, (currentPuzzle.size - 1) * 2)
+      this.y = clamp(this.y, 0, (currentPuzzle.size - 1) * 2)
     }
 
     this.updateMatrix()
