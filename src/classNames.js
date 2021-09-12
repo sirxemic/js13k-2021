@@ -1,6 +1,6 @@
 export const classNames = {
   header: 'a',
-  progress: 'b',
+  _active: 'b',
   button: 'c',
   wrapper: 'd',
   intro: 'e',
@@ -23,5 +23,6 @@ export const classNames = {
   tutorialDone: 'v',
   tutorialModal: 'w',
   next: 'x',
-  step: 'y'
+  step: 'y',
+  closeMenu: 'z'
 }

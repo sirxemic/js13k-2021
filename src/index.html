@@ -82,7 +82,7 @@
   .button:hover {
     background: rgba(25, 0, 25, 0.7);
   }
-  .button:active, .button:focus {
+  .button:active, .button._active, .button:focus {
     box-shadow: 0 0 2em rgba(255,255,255,0.5) inset;
   }
 
@@ -106,13 +106,9 @@
     align-items: center;
   }
 
-  h1 {
+  h1, h2 {
     text-align: center;
     margin-top: 0;
-  }
-
-  .modal .button + .button {
-    margin-top: 0.5em;
   }
 
   .congratulations {
@@ -125,6 +121,10 @@
     transition: all 0.5s ease;
     text-shadow: 0 0 0.08em rgba(0,0,0,0.4);
     pointer-events: none;
+  }
+
+  .intro .button + .button{
+    margin-top: 0.5em;
   }
 
   ._hidden {
@@ -146,6 +146,16 @@
 
   p:first-child {
     margin-top: 0;
+  }
+
+  .grid {
+    display: flex;
+    gap: 0.5em;
+  }
+  .grid > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
   }
 </style>
 <style>
@@ -196,11 +206,27 @@
 
   <div class="modal menu _hidden">
     <div class="wrapper">
-      <h1>Choose difficulty</h1>
-      <div class="button" data-diff="[7,0,0]">7x7 - Easy</div>
-      <div class="button" data-diff="[7,1,0]">7x7 - Hard</div>
-      <div class="button" data-diff="[7,1,1]">7x7 no edge - Hard</div>
-      <div class="button" data-diff="[10,1,1]">10x10 no edge - Hard</div>
+      <div class="grid">
+        <div>
+          <h2>Size</h2>
+          <div class="button" data-s="5">5x5</div>
+          <div class="button _active" data-s="7">7x7</div>
+          <div class="button" data-s="9">9x9</div>
+          <div class="button" data-s="11">11x11</div>
+          <div class="button" data-s="13">13x13</div>
+        </div>
+        <div>
+          <h2>Edgeless</h2>
+          <div class="button _active" data-w="0">No</div>
+          <div class="button" data-w="1">Yes</div>
+        </div>
+        <div>
+          <h2>Difficulty</h2>
+          <div class="button _active" data-d="0">Normal</div>
+          <div class="button" data-d="1">Ridiculous</div>
+        </div>
+      </div>
+      <div class="button closeMenu">Update</div>
     </div>
   </div>
 

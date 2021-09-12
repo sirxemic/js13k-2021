@@ -9,7 +9,7 @@ import { U_MODELMATRIX, U_TIME, U_VARIANT } from './Graphics/sharedLiterals.js'
 import { Input } from './Input.js'
 import { Matrix4 } from './Math/Matrix4.js'
 import { SelectorShader } from './Shaders/SelectorShader.js'
-import { showCongratulations, toggleUndo } from './UI.js'
+import { showCongratulations } from './UI.js'
 import { clamp, closestModulo, noop } from './utils.js'
 
 class Cursor {
@@ -90,13 +90,13 @@ export class Selector {
 
     this.selectedId = -1
 
-    let lastCursorPos = null
-    let preventAccidentalDraw = false
+    let lastCursorPos
 
-    this.hasBeenSolved = false
+    // Save bytes by simply not initializing booleans
+    // this.hasBeenSolved = false
     this.undoStack = []
 
-    this.createdErrorCursor = false
+    // this.createdErrorCursor = false
 
     this.startTimestamp = 0
 

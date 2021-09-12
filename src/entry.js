@@ -1,6 +1,6 @@
 import { TheCamera } from './Camera.js'
 import { gl, TheCanvas } from './Graphics.js'
-import { delta, setCurrentPuzzle, setDelta, updateTime } from './globals.js'
+import { delta, puzzleSettings, setCurrentPuzzle, setDelta, updatePuzzleSettings, updateTime } from './globals.js'
 import {
   bindDifficultySelect,
   bindStart,
@@ -22,7 +22,6 @@ import {
 } from './UI.js'
 import { clamp } from './utils.js'
 import { loadAssets, MainSong } from './Assets.js'
-import { loadProgress } from './Progress.js'
 import { PuzzleRenderer } from './PuzzleRenderer.js'
 import { Selector } from './Selector.js'
 import { StarsLayer } from './StarsLayer.js'
@@ -39,8 +38,6 @@ function resizeCanvas () {
 
 resizeCanvas()
 window.onresize = resizeCanvas
-
-loadProgress()
 
 /**
  * Global graphics
@@ -62,12 +59,6 @@ const PUZZLE_STATE = 3
 const PUZZLE_FADE_OUT = 4
 const TUTORIAL_FADE = 5
 const TUTORIAL = 6
-
-let puzzleSettings = {
-  size: 7,
-  difficulty: 0,
-  wrapping: false
-}
 
 async function playMusic () {
   await TheAudioContext.resume()
@@ -101,8 +92,7 @@ const mainFSM = new FSM({
       })
 
       bindDifficultySelect((settings) => {
-        puzzleSettings = settings
-
+        updatePuzzleSettings(settings)
         mainFSM.setState(PUZZLE_FADE_OUT)
       })
 
@@ -144,7 +134,7 @@ const mainFSM = new FSM({
     enter () {
       showTutorial()
 
-      const puzzle = new Puzzle(5, 5, [
+      const puzzle = new Puzzle(5, [
         { center: new Vector2(1, 0.5), spaces: [] },
         { center: new Vector2(2, 1.5), spaces: [] },
         { center: new Vector2(4, 0.5), spaces: [] },

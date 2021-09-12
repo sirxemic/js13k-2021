@@ -17,7 +17,7 @@ export class PuzzleGenerator {
     let bestPass
     let i
 
-    const maxPasses = USE_PRESET ? 1 : 100
+    const maxPasses = USE_PRESET ? 1 : 200
 
     for (i = 0; i < maxPasses; i++) {
       const Algo = USE_PRESET ? DebugAlgorithm : GenerationAlgorithm1

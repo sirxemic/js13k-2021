@@ -13,14 +13,12 @@ export class GenerationAlgorithm1 extends GenerationAlgorithmBase {
   }
 
   generate () {
-    const startX = this.wrapping ? 0 : 0.5
-    const startY = this.wrapping ? 0 : 0.5
-    const endX = this.board.size - 0.5
-    const endY = this.board.size - 0.5
+    const startIt = this.wrapping ? 0 : 0.5
+    const endIt = this.board.size - 0.5
 
     const todo = []
-    for (let y = startY; y <= endY; y += 0.5) {
-      for (let x = startX; x <= endX; x += 0.5) {
+    for (let y = startIt; y <= endIt; y += 0.5) {
+      for (let x = startIt; x <= endIt; x += 0.5) {
         let type
         if (x % 1 === 0.5 && y % 1 === 0.5) {
           type = SPACE_TYPE

@@ -1,4 +1,5 @@
 import { classNames } from './classNames.js'
+import { puzzleSettings } from './globals.js'
 
 // <dev-only>
 for (let key in classNames) {
@@ -8,6 +9,10 @@ for (let key in classNames) {
 
 function getElement (name) {
   return document.querySelector('.' + name)
+}
+
+function getElements (name) {
+  return document.querySelectorAll('.' + name)
 }
 
 function toggleVisibility (element, show) {
@@ -22,6 +27,7 @@ const nextButton = getElement(classNames.next)
 const tutorialModal = getElement(classNames.tutorialModal)
 const difficultyModal = getElement(classNames.menu)
 const difficultyButton = getElement(classNames.openMenu)
+const difficultyDoneButton = getElement(classNames.closeMenu)
 const newGameButton = getElement(classNames.new)
 const restartGameButton = getElement(classNames.restart)
 const solveGameButton = getElement(classNames.solve)
@@ -108,8 +114,11 @@ export function hideCongratulations () {
   toggleVisibility(congratulations, false)
 }
 
-export function updateDifficultyButton (settings) {
-  difficultyButton.textContent = `${settings.size}x${settings.size}${settings.wrapping ? ' no edge' : ''} - ${settings.difficulty ? 'Hard' : 'Easy'}`
+export function updateDifficultyButton () {
+  const edgeless = puzzleSettings.wrapping ? ' Edgeless' : ''
+  const difficulty = puzzleSettings.difficulty ? 'Ridiculous' : 'Normal'
+  difficultyButton.textContent =
+    `${puzzleSettings.size}x${puzzleSettings.size}${edgeless} - ${difficulty}`
 }
 
 export function start () {
@@ -127,17 +136,17 @@ export function start () {
   }
 
   nextButton.onclick = () => {
-    const steps = [...document.querySelectorAll('.' + classNames.step)]
+    const steps = [...getElements(classNames.step)]
     let foundVisible = false
 
     for (let i = 0; i < steps.length; i++) {
       const el = steps[i]
       if (!el.classList.contains(classNames._hidden)) {
         foundVisible = true
-        el.classList.add(classNames._hidden)
+        toggleVisibility(el, false)
 
       } else if (foundVisible) {
-        el.classList.remove(classNames._hidden)
+        toggleVisibility(el, true)
         if (i === steps.length - 1) {
           toggleVisibility(nextButton, false)
           toggleVisibility(tutorialDoneButton, true)
@@ -153,7 +162,10 @@ export function start () {
     onTutorialEnd()
   }
 
+  let dirtySettings
+
   difficultyButton.onclick = () => {
+    dirtySettings = { ...puzzleSettings }
     toggleVisibility(difficultyModal, true)
   }
 
@@ -179,17 +191,29 @@ export function start () {
     }
   })
 
+  function updateSettingButtons () {
+    getElements(classNames.button).forEach(button => {
+      button.classList.remove(classNames._active)
+    })
+    difficultyModal.querySelector(`[data-s="${dirtySettings.size}"]`).classList.add(classNames._active)
+    difficultyModal.querySelector(`[data-w="${+dirtySettings.wrapping}"]`).classList.add(classNames._active)
+    difficultyModal.querySelector(`[data-d="${dirtySettings.difficulty}"]`).classList.add(classNames._active)
+  }
+
   difficultyModal.onclick = (e) => {
     if (e.target === difficultyModal) {
       toggleVisibility(difficultyModal, false)
-    } else if (e.target.dataset['diff']) {
+    } else if (e.target.dataset['s']) {
+      dirtySettings.size = Number(e.target.dataset['s'])
+    } else if (e.target.dataset['w']) {
+      dirtySettings.wrapping = Number(e.target.dataset['w'])
+    } else if (e.target.dataset['d']) {
+      dirtySettings.difficulty = Number(e.target.dataset['d'])
+    } else if (e.target === difficultyDoneButton) {
+      onDifficultySelect(dirtySettings)
       toggleVisibility(difficultyModal, false)
-      const data = JSON.parse(e.target.dataset['diff'])
-      onDifficultySelect({
-        size: data[0],
-        difficulty: data[1],
-        wrapping: data[2]
-      })
     }
+
+    updateSettingButtons()
   }
 }
