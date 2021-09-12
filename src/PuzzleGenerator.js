@@ -37,13 +37,13 @@ export class PuzzleGenerator {
     }
     // <dev-only>
     console.log(i === maxPasses ? 'Could not find a puzzle with the right difficulty' : `Took ${i} passes`)
-    bestPass.board.debug()
+    bestPass.debug()
     // </dev-only>
-    return new Puzzle(this.size, bestPass.board.galaxies, this.wrapping)
+    return new Puzzle(this.size, bestPass.galaxies, this.wrapping)
   }
 
   matchesDifficulty (pass) {
-    const { galaxies } = pass.board
+    const { galaxies } = pass
     const solver = new PuzzleSolver(new Puzzle(this.size, galaxies, this.wrapping))
     const result = solver.solve()
 

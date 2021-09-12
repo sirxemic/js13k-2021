@@ -2,11 +2,8 @@ import { TheCanvas } from './Graphics.js'
 import { noop } from './utils.js'
 
 export let Input = {
-  x: -1000,
-  y: -1000,
   mouseX: 300,
   mouseY: 300,
-  scale: 1,
   usingMouse: false,
   pointerDown: false,
 

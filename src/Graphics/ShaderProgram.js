@@ -3,7 +3,7 @@ import { Vector3 } from '../Math/Vector3.js'
 import { Matrix3 } from '../Math/Matrix3.js'
 import { Matrix4 } from '../Math/Matrix4.js'
 import { TheCamera } from '../Camera.js'
-import { U_PROJECTIONMATRIX, U_VIEWMATRIX, ATTR_POSITION, U_MODELMATRIX, U_NORMALMATRIX } from './sharedLiterals.js'
+import { U_PROJECTIONMATRIX, U_VIEWMATRIX, ATTR_POSITION, U_MODELMATRIX } from './sharedLiterals.js'
 import { common } from './ShaderCommons.js'
 import { Vector2 } from '../Math/Vector2.js'
 import { Vector4 } from '../Math/Vector4.js'
@@ -30,7 +30,6 @@ attribute vec3 ${ATTR_POSITION};
 uniform mat4 ${U_MODELMATRIX};
 uniform mat4 ${U_VIEWMATRIX};
 uniform mat4 ${U_PROJECTIONMATRIX};
-uniform mat3 ${U_NORMALMATRIX};
 `
 const fragmentShaderHeader = `/*glsl*/
 precision highp float;
