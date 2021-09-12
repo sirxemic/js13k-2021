@@ -118,7 +118,7 @@ export function hideCongratulations () {
 }
 
 export function updateDifficultyButton () {
-  const edgeless = puzzleSettings.wrapping ? ' Edgeless' : ''
+  const edgeless = puzzleSettings.wrapping ? ' Endless' : ''
   const difficulty = puzzleSettings.difficulty ? 'Ridiculous' : 'Normal'
   difficultyButton.textContent =
     `${puzzleSettings.size}x${puzzleSettings.size}${edgeless} - ${difficulty}`

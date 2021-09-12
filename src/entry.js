@@ -137,14 +137,16 @@ const mainFSM = new FSM({
     enter () {
       showTutorial()
 
-      const puzzle = new Puzzle(5, [
+      const puzzle = new Puzzle(6, [
         { center: new Vector2(1, 0.5), spaces: [] },
         { center: new Vector2(2, 1.5), spaces: [] },
         { center: new Vector2(4, 0.5), spaces: [] },
         { center: new Vector2(4.5, 2.5), spaces: [] },
         { center: new Vector2(0.5, 2.5), spaces: [] },
         { center: new Vector2(2, 3.5), spaces: [] },
-        { center: new Vector2(3.5, 4.5), spaces: [] }
+        { center: new Vector2(3.5, 4.5), spaces: [] },
+        { center: new Vector2(2.5, 5.5), spaces: [] },
+        { center: new Vector2(5.5, 3), spaces: [] }
       ], false)
       puzzle.setSymmetricallyAt({ x: 0, y: 1 }, 1)
       puzzle.setSymmetricallyAt({ x: 1, y: 2 }, 1)
