@@ -83,6 +83,9 @@ export function bindRestart (callback) {
 /**
  * UI controlling functions
  */
+export function updateLoader () {
+  loadingScreen.textContent += '.'
+}
 export function toggleUndo (show) {
   toggleVisibility(undoButton, show)
 }

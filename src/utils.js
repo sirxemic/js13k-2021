@@ -1,3 +1,5 @@
+import { updateLoader } from './UI.js'
+
 export const noop = () => {}
 
 /**
@@ -161,7 +163,8 @@ export function smoothstep(edge0, edge1, x) {
  * while the assets are being generated
  */
 export async function waitForNextFrame () {
-  document.querySelector('.loading').textContent += '.'
+  // Very hacky, but meh
+  updateLoader()
   await new Promise(resolve => requestAnimationFrame(resolve))
 }
 
